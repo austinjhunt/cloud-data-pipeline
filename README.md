@@ -7,6 +7,19 @@ This project uses [kafka-python](https://pypi.org/project/kafka-python/), a Pyth
 
 # Steps Taken to Build Project
 ## Milestone 1 Steps (due Week 4, 9/15/2021)
+
+### Setting Up A Local Ubuntu 20.04 VM with VirtualBox (each team member must do this)
+- If not installed, [install VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+- Install Ubuntu 20.04 LTS on VirtualBox using [these instructions](https://fossbytes.com/how-to-install-ubuntu-20-04-lts-virtualbox-windows-mac-linux/)
+- Rather than creating a shared folder between the host and guest OS, we'll use git to keep the code synchronized between the guest and host. You can develop locally on your host OS using an IDE and whatever changes you commit can be pulled into the guest.
+  - Log into your Ubuntu 20.04 VM once you've created it.
+  - Open a Terminal window.
+  - Set up Python 3 on your VM using [these instructions](https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-programming-environment-on-an-ubuntu-20-04-server).
+  - Clone the project repository: `git clone https://github.com/austinjhunt/cs5287progassign1.git`
+  - Navigate into the project: `cd cs5287progassign1`
+  - Create a virtual environment to isolate the Python package installations to this project: `python3 -m venv venv`
+  - Activate the virtual environment: `source venv/bin/activate`
+  - Install the Python requirements: `pip install -r requirements.txt`
 ### Creating [Chameleon Cloud](https://chameleoncloud.org) VMs with KVM
    - Sign into [Chameleon Cloud](https://chameleoncloud.org). Navigate to the project for this class.
    - Choose the **Experiment** tab at the top, and choose the **KVM** option from the dropdown menu.
@@ -44,8 +57,8 @@ This project uses [kafka-python](https://pypi.org/project/kafka-python/), a Pyth
      - Install Apache Kafka using [these instructions](https://www.digitalocean.com/community/tutorials/how-to-install-apache-kafka-on-ubuntu-20-04)
      - Set up Python3 using [these instructions](https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-programming-environment-on-an-ubuntu-20-04-server)
 
-### Finding a Data Source
-
+### The Data Source
+We are using the [Yahoo Finance API](https://finance.yahoo.com/quotes/API,Documentation/view/v1/) as a data source for our pipeline. Specifically, we use the [yfinance](https://pypi.org/project/yfinance/) Python package for downloading and sending Stock Market data into the Kafka pipeline.
 ## Milestone 2 Steps (due Week 5, 9/22/2021)
 
 ## Milestone 3 Steps (due Week 6, 9/29/2021)
