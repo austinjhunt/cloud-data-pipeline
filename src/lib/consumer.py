@@ -42,7 +42,8 @@ class Consumer:
         self.kafka_consumer.close()
 
     def consume_and_save(self):
-         """ Method to run consumption of messages until messages no longer arrive """
+         """ Method to run consumption of messages and then save into couchdb
+         until messages no longer arrive """
          self.info('Beginnning consumption and save to CouchDB')
          for msg in self.kafka_consumer:
              self.info(f'Receiving message: {json.loads(str(msg.value, "ascii"))}')
