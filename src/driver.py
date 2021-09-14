@@ -13,6 +13,9 @@ class Driver:
         self.sink_host = None
         self.consumer_host = None
         self.bootstrap_server = None
+        self.couchdb_server = None
+        self.couchdb_user = None
+        self.couchdb_password = None
         self.configure()
 
     def run_consumer(self, topic='stock-market-data', verbose=False):
@@ -21,9 +24,30 @@ class Driver:
         self.consumer = Consumer(
             verbose=verbose,
             bootstrap_server=self.bootstrap_server,
-            topics=[topic]
+            topics=[topic],
+            couchdb_server = self.couchdb_server,
+            couchdb_user = self.couchdb_user,
+            couchdb_password = self.couchdb_password,
+            couchdb_database = self.couchdb_database
         )
         self.consumer.consume()
+
+    def run_consumer_couchdb(self, topic='stock-market-data', verbose=False):
+        """ Method to drive a Kafka Consumer process and then save into couchdb 
+        (run this from a Cloud VM where both Apache Kafka and Apache CouchDB are installed)  
+        """
+        self.info("Running Kafka Consumer...")
+        self.consumer = Consumer(
+            verbose=verbose,
+            bootstrap_server=self.bootstrap_server,
+            topics=[topic],
+            couchdb_server = self.couchdb_server,
+            couchdb_user = self.couchdb_user,
+            couchdb_password = self.couchdb_password,
+            couchdb_database = self.couchdb_database
+        )
+        self.consumer.connect_couchdb()
+        self.consumer.consume_and_save()
 
     def run_producer(self,topic='stock-market-data', producer_alias="Producer 1",stock_symbol="AMZN",
         sleep_interval=1, verbose=False,num_messages=100):
@@ -81,6 +105,14 @@ class Driver:
                 self.sink_host = cloud_hosts[1]
                 self.debug(f"Consumer host: {self.consumer_host}")
                 self.debug(f"Sink Host: {self.sink_host}")
+
+                # couch db admin name and password
+                couchdb = config['couchdb']
+                self.couchdb_server = couchdb['server']
+                self.couchdb_user = couchdb['user']
+                self.couchdb_password = couchdb['password']
+                self.couchdb_database = couchdb_database['database']
+
             except Exception as e:
                 self.error(e)
 
@@ -101,6 +133,8 @@ parser.add_argument('-s', '--sleep_interval', default=1, type=int,
 parser.add_argument('-ss', '--stock_symbol', default='AMZN', help='stock symbol to produce data for', type=str)
 
 parser.add_argument('-c', '--run_consumer', help='whether to run consumer', action='store_true')
+parser.add_argument('-cb', '--run_consumer_couchdb', help='whether to run consumer and then save to couchdb', action='store_true')
+
 
 args = parser.parse_args()
 driver = Driver(verbose=args.verbose)
@@ -121,6 +155,12 @@ if args.run_producer:
 elif args.run_consumer:
     topic = args.topic
     driver.run_consumer(
+        topic=topic,
+        verbose=args.verbose
+    )
+elif args.run_consumer_couchdb:
+    topic = args.topic
+    driver.run_consumer_couchdb(
         topic=topic,
         verbose=args.verbose
     )
