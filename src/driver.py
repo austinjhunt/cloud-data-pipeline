@@ -46,6 +46,8 @@ class Driver:
             couchdb_password = self.couchdb_password,
             couchdb_database = self.couchdb_database
         )
+        # first connect to couchdb 
+        # then consume the message and save into couchdb
         self.consumer.connect_couchdb()
         self.consumer.consume_and_save()
 
@@ -111,7 +113,7 @@ class Driver:
                 self.couchdb_server = couchdb['server']
                 self.couchdb_user = couchdb['user']
                 self.couchdb_password = couchdb['password']
-                self.couchdb_database = couchdb_database['database']
+                self.couchdb_database = couchdb['database']
 
             except Exception as e:
                 self.error(e)
