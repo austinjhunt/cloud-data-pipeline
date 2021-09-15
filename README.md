@@ -21,7 +21,7 @@ We intend to run one producer on each team member's local VirtualBox VM, and we 
   - Kafka Broker id=1
   - CouchDB
 # Steps Taken to Build Project
-## Milestone 1 Steps (due Week 4, 9/15/2021)
+## Milestone 1 Steps (due Week 4, 9/15/2021) - ([Video Demo](https://www.youtube.com/watch?v=TflXLZmG7cA))
 ### Setting Up A Local Ubuntu 20.04 VM with VirtualBox (each team member must do this)
 - If not installed, [install VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 - Install Ubuntu 20.04 LTS on VirtualBox using [these instructions](https://fossbytes.com/how-to-install-ubuntu-20-04-lts-virtualbox-windows-mac-linux/)
