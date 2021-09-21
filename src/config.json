@@ -9,6 +9,16 @@
         }
     ],
 
+    "aws_hosts": [{
+        "private": "172.31.8.222",
+        "public": "54.156.171.6"
+    },
+    {
+        "private": "172.31.13.102",
+        "public": "52.21.243.110"
+    }
+],    
+
     "couchdb": {
         "server": "localhost",
         "user": "admin",
