@@ -1,5 +1,5 @@
 {
-    "cloud_hosts": [{
+    "cc_hosts": [{
             "private": "10.60.5.84",
             "public": "129.114.25.176"
         },

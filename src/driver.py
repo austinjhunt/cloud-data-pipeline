@@ -8,8 +8,9 @@ from lib.consumer import Consumer
 
 class Driver:
 
-    def __init__(self,verbose=False):
+    def __init__(self, cloud_provider, verbose=False):
         self.setup_logging(verbose)
+        self.cloud_provider=cloud_provider
         self.sink_host = None
         self.consumer_host = None
         self.bootstrap_server = None
@@ -98,7 +99,10 @@ class Driver:
         with open(config_file) as f:
             try:
                 config = json.load(f)
-                cloud_hosts = config['cloud_hosts']
+                if self.cloud_provider == 'cc':
+                    cloud_hosts = config['cc_hosts']
+                elif self.cloud_provider == 'aws':
+                    cloud_hosts = config['aws_hosts']
                 # Should be 2 VMs.
                 # First will run Kafka Broker, Zookeeper, and Consumer.
                 self.consumer_host = cloud_hosts[0]
@@ -136,10 +140,11 @@ parser.add_argument('-ss', '--stock_symbol', default='AMZN', help='stock symbol 
 
 parser.add_argument('-c', '--run_consumer', help='whether to run consumer', action='store_true')
 parser.add_argument('-cb', '--run_consumer_couchdb', help='whether to run consumer and then save to couchdb', action='store_true')
+parser.add_argumnet('-cp', '--cloud_provider', help='choose cc or aws', type=str, required=True)
 
 
 args = parser.parse_args()
-driver = Driver(verbose=args.verbose)
+driver = Driver(cloud_provider=args.cloud_provider, verbose=args.verbose)
 
 if args.run_producer:
     producer_alias = args.producer_alias
