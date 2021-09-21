@@ -35,25 +35,21 @@ class Consumer:
         except:
             self.db = self.couch[self.couchdb_database]
 
-    def consume(self):
+    def consume(self, save_data=False):
         """ Method to run consumption of messages until messages no longer arrive """
         self.info('Beginning consumption')
         for msg in self.kafka_consumer:
             self.info(
                 f'Receiving message: {json.loads(str(msg.value, "ascii"))}'
             )
+            if save_data:
+                self.info(
+                    f'Saving to database!'
+                )
+                msg = json.loads(str(msg.value, "ascii"))
+                self.db.save(msg)
         self.kafka_consumer.close()
 
-    def consume_and_save(self):
-         """ Method to run consumption of messages and then save into couchdb
-         until messages no longer arrive """
-         self.info('Beginnning consumption and save to CouchDB')
-         for msg in self.kafka_consumer:
-             self.info(f'Receiving message: {json.loads(str(msg.value, "ascii"))}')
-             message = json.loads(str(msg.value, "ascii"))
-             self.db.save(message)
-             self.info(f'Return message from couchdb: {message}')
-         self.kafka_consumer.close()
 
 
     def setup_logging(self, verbose):

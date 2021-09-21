@@ -18,23 +18,9 @@ class Driver:
         self.couchdb_password = None
         self.configure()
 
-    def run_consumer(self, topic='stock-market-data', verbose=False):
-        """ Method to drive a Kafka Consumer process (run this from a Cloud VM where Apache Kafka is installed) """
-        self.info("Running Kafka Consumer...")
-        self.consumer = Consumer(
-            verbose=verbose,
-            bootstrap_server=self.bootstrap_server,
-            topics=[topic],
-            couchdb_server = self.couchdb_server,
-            couchdb_user = self.couchdb_user,
-            couchdb_password = self.couchdb_password,
-            couchdb_database = self.couchdb_database
-        )
-        self.consumer.consume()
-
-    def run_consumer_couchdb(self, topic='stock-market-data', verbose=False):
-        """ Method to drive a Kafka Consumer process and then save into couchdb 
-        (run this from a Cloud VM where both Apache Kafka and Apache CouchDB are installed)  
+    def run_consumer(self, topic='stock-market-data', verbose=False, save_data=False):
+        """ Method to drive a Kafka Consumer process (run this from a Cloud VM where Apache Kafka is installed)
+        If save_data, save into couchdb (run this from a Cloud VM where both Apache Kafka and Apache CouchDB are installed
         """
         self.info("Running Kafka Consumer...")
         self.consumer = Consumer(
@@ -46,10 +32,9 @@ class Driver:
             couchdb_password = self.couchdb_password,
             couchdb_database = self.couchdb_database
         )
-        # first connect to couchdb 
-        # then consume the message and save into couchdb
-        self.consumer.connect_couchdb()
-        self.consumer.consume_and_save()
+        if save_data:
+            self.consumer.connect_couchdb()
+        self.consumer.consume(save_data=save_data)
 
     def run_producer(self,topic='stock-market-data', producer_alias="Producer 1",stock_symbol="AMZN",
         sleep_interval=1, verbose=False,num_messages=100):
@@ -135,34 +120,24 @@ parser.add_argument('-s', '--sleep_interval', default=1, type=int,
 parser.add_argument('-ss', '--stock_symbol', default='AMZN', help='stock symbol to produce data for', type=str)
 
 parser.add_argument('-c', '--run_consumer', help='whether to run consumer', action='store_true')
-parser.add_argument('-cb', '--run_consumer_couchdb', help='whether to run consumer and then save to couchdb', action='store_true')
+parser.add_argument('-d', '--dump', help='whether consumer should dump data/save to couchdb, only run with -c', action='store_true')
 
 
 args = parser.parse_args()
 driver = Driver(verbose=args.verbose)
 
 if args.run_producer:
-    producer_alias = args.producer_alias
-    topic = args.topic
-    stock_symbol = args.stock_symbol
-    sleep_interval = args.sleep_interval
     driver.run_producer(
-        topic=topic,
-        producer_alias=producer_alias,
-        stock_symbol=stock_symbol,
+        topic=args.topic,
+        producer_alias=args.producer_alias ,
+        stock_symbol=args.stock_symbol ,
         num_messages=args.num_messages,
-        sleep_interval=sleep_interval,
+        sleep_interval=args.sleep_interval,
         verbose=args.verbose
     )
 elif args.run_consumer:
-    topic = args.topic
     driver.run_consumer(
-        topic=topic,
-        verbose=args.verbose
-    )
-elif args.run_consumer_couchdb:
-    topic = args.topic
-    driver.run_consumer_couchdb(
-        topic=topic,
-        verbose=args.verbose
+        topic=args.topic,
+        verbose=args.verbose,
+        save_data=args.dump
     )

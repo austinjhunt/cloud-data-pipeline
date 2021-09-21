@@ -1,0 +1,155 @@
+---
+- hosts: aws
+  # Ubuntu 20.04 and other versions of Debian Linux ship with Python 3 pre-installed. No need to install.
+  remote_user: ubuntu
+  become: true
+  tasks:
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: "yes"
+      update_cache: "yes"
+      cache_valid_time: 86400 # one day
+  - name: install packages
+    apt:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - acl
+      - python3-pip
+
+
+  - name: Clone the GitHub repository
+    git:
+      repo: https://github.com/austinjhunt/cs5287progassign1.git
+      dest: /home/ubuntu/cs5287progassign1
+      clone: yes
+      update: yes
+
+  - name: Install OpenJDK JRE
+    apt:
+      name: default-jre
+      state: present
+
+  - name: Create kafka user in sudo group
+    become: yes
+    user:
+      name: kafka
+      groups:
+        - sudo
+      append: yes
+
+  - name: Create /home/kafka/Downloads as kafka user
+    become_user: kafka
+    become: yes
+    file:
+      path: /home/kafka/Downloads
+      state: directory
+
+  - name: Download Kafka binaries as kafka user
+    become_user: kafka
+    become: yes
+    get_url:
+      url: https://downloads.apache.org/kafka/2.6.2/kafka_2.13-2.6.2.tgz
+      dest: /home/kafka/Downloads/kafka.tgz
+
+  - name: Create /home/kafka/kafka as kafka user
+    become_user: kafka
+    become: yes
+    file:
+      path: /home/kafka/kafka
+      state: directory
+
+  - name: Extract kafka archive using tar command as kafka user
+    become_user: kafka
+    become: yes
+    unarchive:
+      src: /home/kafka/Downloads/kafka.tgz
+      dest: /home/kafka/kafka/
+      extra_opts: [--strip-components=1]
+
+  - name: Create firewall rules for Zookeeper, Kafka, and CouchDB
+    become: yes
+    ufw:
+      rule: allow
+      port: "{{ item }}"
+    loop:
+    - "2181"
+    - "4369"
+    - "5984"
+    - "9092"
+
+  - name: Copy zookeeper.service and kafka.service to server services
+    become: yes
+    copy:
+      src: "{{ playbook_dir }}/files-dist/{{ item }}"
+      dest: "/etc/systemd/system/{{ item }}"
+      owner: kafka
+    loop:
+    - "zookeeper.service"
+    - "kafka.service"
+
+  - name: Start and enable kafka and zookeeper
+    become: yes
+    systemd:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    loop:
+    - kafka
+    - zookeeper
+
+  - name: Install Python virtualenv
+    pip:
+      name: virtualenv
+
+  - name: Install Python requirements for project
+    pip:
+      chdir:  /home/ubuntu/cs5287progassign1
+      requirements: /home/ubuntu/cs5287progassign1/requirements.txt
+      virtualenv: venv
+      virtualenv_command: virtualenv
+      state: present
+
+- hosts: aws2
+  # Only the second cloud VM
+  become: yes
+  tasks:
+  - name: Update zookeeper.connect on VM2 server.properties
+    lineinfile:
+      path: /home/kafka/kafka/config/server.properties
+      regexp: 'zookeeper.connect=.*'
+      line: zookeeper.connect=hostvars[aws1]['ansible_default_ipv4']['address']
+  - name: Update advertised.listeners on VM2 server.properties
+    lineinfile:
+      path: /home/kafka/kafka/config/server.properties
+      regexp: 'advertised.listeners=.*'
+      line: advertised.listeners=PLAINTEXT://[aws2]['ansible_default_ipv4']['address']
+  - name: Update broker.id on VM2 server.properties
+    lineinfile:
+      path: /home/kafka/kafka/config/server.properties
+      regexp: 'broker.id=.*'
+      line: broker.id = 1
+  - name: Install curl, apt-transport-https, gnupg
+    apt:
+      update_cache: yes
+      name: '{{ item }}'
+      state: present
+    loop:
+    - curl
+    - apt-transport-https
+    - gnupg
+  - name: Curl CouchDB
+    shell: curl https://couchdb.apache.org/repo/keys.asc | gpg --dearmor | sudo tee /usr/share/keyrings/couchdb-archive-keyring.gpg >/dev/null 2>&1
+
+  - name: Update apt sources with couchdb
+    shell: >
+      . /etc/os-release && \
+      echo "deb [signed-by=/usr/share/keyrings/couchdb-archive-keyring.gpg] https://apache.jfrog.io/artifactory/couchdb-deb/ ${VERSION_CODENAME} main" \
+      | sudo tee /etc/apt/sources.list.d/couchdb.list >/dev/null
+
+  - name: Install CouchDB
+    apt:
+      name: couchdb
+      update_cache: yes
+
+...
