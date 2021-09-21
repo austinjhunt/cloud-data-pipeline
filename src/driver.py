@@ -140,7 +140,7 @@ parser.add_argument('-ss', '--stock_symbol', default='AMZN', help='stock symbol 
 
 parser.add_argument('-c', '--run_consumer', help='whether to run consumer', action='store_true')
 parser.add_argument('-cb', '--run_consumer_couchdb', help='whether to run consumer and then save to couchdb', action='store_true')
-parser.add_argumnet('-cp', '--cloud_provider', help='choose cc or aws', type=str, required=True)
+parser.add_argument('-cp', '--cloud_provider', help='choose cc or aws', type=str, required=True)
 
 
 args = parser.parse_args()
