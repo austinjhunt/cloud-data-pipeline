@@ -8,7 +8,7 @@ from lib.consumer import Consumer
 
 class Driver:
 
-    def __init__(self,verbose=False):
+    def __init__(self,verbose=False, cloud_platform="chameleon"):
         self.setup_logging(verbose)
         self.sink_host = None
         self.consumer_host = None
@@ -16,6 +16,7 @@ class Driver:
         self.couchdb_server = None
         self.couchdb_user = None
         self.couchdb_password = None
+        self.cloud_platform = cloud_platform
         self.configure()
 
     def run_consumer(self, topic='stock-market-data', verbose=False, save_data=False):
@@ -83,7 +84,7 @@ class Driver:
         with open(config_file) as f:
             try:
                 config = json.load(f)
-                cloud_hosts = config['cloud_hosts']
+                cloud_hosts = config['cloud_hosts'][self.cloud_platform]
                 # Should be 2 VMs.
                 # First will run Kafka Broker, Zookeeper, and Consumer.
                 self.consumer_host = cloud_hosts[0]
@@ -107,6 +108,7 @@ class Driver:
 parser = argparse.ArgumentParser(
     description='pass arguments to run the driver for the project'
 )
+parser.add_argument('--cloud_platform', default='chameleon', choices=['chameleon','aws','gcp'], help='indicate which cloud platform to use')
 parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
 parser.add_argument('-t', '--topic',
     help='topic to produce (if running producer with -p) or consume (if running consumer with -c)',
@@ -124,7 +126,10 @@ parser.add_argument('-d', '--dump', help='whether consumer should dump data/save
 
 
 args = parser.parse_args()
-driver = Driver(verbose=args.verbose)
+
+driver = Driver(
+    verbose=args.verbose,
+    cloud_platform=args.cloud_platform)
 
 if args.run_producer:
     driver.run_producer(

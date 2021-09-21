@@ -23,10 +23,6 @@ class Consumer:
 
     def connect_couchdb(self):
         # couchdb connection
-        # self.info(f'couchdb_user: {self.couchdb_user}')
-        # self.info(f'couchdb_password: {self.couchdb_password}')
-        # self.info(f'couchdb_server: {self.couchdb_server}')
-        # self.info(f'full address: http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}:5984/')
         self.couch = couchdb.Server(f"http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}:5984/")
         # create the database if not existing, get the database if already existing
         self.info('Get a DataBase to store the messages')
