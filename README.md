@@ -27,6 +27,6 @@ We intend to run one producer on each team member's local VirtualBox VM, and we 
 - [Video](https://www.youtube.com/watch?v=TflXLZmG7cA)
 #### Milestone 2 - Due 9/22/2021
 - [Documentation](milestones/M2README.md)
-- [Video](https://www.youtube.com/watch?v=TflXLZmG7cA)
+- [Video](https://www.youtube.com/watch?v=wKBLXW1JScE)
 #### Milestone 2 - Due 9/29/2021
 - [Documentation](milestones/M3README.md)
