@@ -66,3 +66,4 @@
    - SSH to both VMs using the key-based authentication enabled through the keypair selection previously. I like using [Iterm2](https://iterm2.com/downloads/stable/latest) for MacOS for this: `ssh cc@<public ip of VM>`
    - On **BOTH VM**s, do the following:
      - Set up Python3 using [these instructions](https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-programming-environment-on-an-ubuntu-20-04-server)
+     - Also be sure to install the venv module with `sudo apt install python3-venv`

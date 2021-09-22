@@ -22,7 +22,7 @@ class Consumer:
         self.couchdb_database = couchdb_database
 
     def connect_couchdb(self):
-        # couchdb connection  
+        # couchdb connection
         self.couch = couchdb.Server(f"http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}:5984/")
         # create the database if not existing, get the database if already existing
         self.info('Get a DataBase to store the messages')
@@ -30,8 +30,8 @@ class Consumer:
             self.db = self.couch.create(self.couchdb_database)
         except:
             self.db = self.couch[self.couchdb_database]
- 
-    def consume(self, save_data=False): 
+
+    def consume(self, save_data=False):
         """ Method to run consumption of messages until messages no longer arrive """
         self.info('Beginning consumption')
         for msg in self.kafka_consumer:
@@ -44,8 +44,8 @@ class Consumer:
                 )
                 msg = json.loads(str(msg.value, "ascii"))
                 self.db.save(msg)
-        self.kafka_consumer.close()  
-        
+        self.kafka_consumer.close()
+
     def setup_logging(self, verbose):
         """ set up self.logger for producer logging """
         self.logger = logging.getLogger('consumer')
