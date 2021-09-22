@@ -17,7 +17,7 @@
 10. Demo the minimum expected capabilities to the TAs.
 
 
-## Milestone 2 Steps Taken (due Week 5, 9/22/2021) - ([Video Demo](https://www.youtube.com/watch?v=TflXLZmG7cA))
+## Milestone 2 Steps Taken (due Week 5, 9/22/2021) - ([Video Demo](https://www.youtube.com/watch?v=wKBLXW1JScE))
 ### VirtualBox VM Prep
   - Project was already cloned to VirtualBox VM in Milestone 1 with: `git clone https://github.com/austinjhunt/cs5287progassign1.git`
   - Navigate into the project: `cd cs5287progassign1`
