@@ -23,6 +23,7 @@
   - Navigate into the project: `cd cs5287progassign1`
   - Create a virtual environment to isolate the Python package installations to this project: `python3 -m venv venv`
   - Activate the virtual environment: `source venv/bin/activate`
+  - Install wheel: `pip install wheel`
   - Install the Python requirements: `pip install -r requirements.txt`
 ### Chameleon Cloud VM Prep
    - SSH to **both** VMs using the key-based authentication enabled through the keypair selection previously. I like using [Iterm2](https://iterm2.com/downloads/stable/latest) for MacOS for this: `ssh cc@<public ip of VM>`
@@ -66,8 +67,28 @@ python3 driver.py --cloud_platform chameleon -t stock-market-data -c -v
 ```
 
 ## Replicating CLoud Functionality to Other Platforms
-
-Run all of the milestone 1 cloud commands and the milestone 2 cloud commands on a new pair of AWS EC2 instances, then run the tests again, passing in `--cloud_platform aws` to the driver instead of `--cloud_platform chameleon`
+### AWS
+1. Open AWS Educate and sign in.
+2. Open the classroom that's been allocated for the class.
+3. Open the AWS Console.
+4. Search for and open EC2.
+5. Launch Instances.
+6. Search for "Ubuntu" in the AMI catalog.
+7. Select **Ubuntu Server 20.04 LTS (HVM), SSD Volume Type.** (64 bit)
+8. Choose t2.micro (free tier eligible)
+9. Click **Next: Configure instance details**. Set number of instances to 2.
+10. Click **Next: Add Storage**.
+11. Click **Next: Add Tags**
+12. Click **Next: Configure Security Group**
+13. Create the following rules in the screenshot below. Name the security group `kafka-couchdb-zookeeper-security`. ** NOTE: These rules are not secure and leave these particular ports on the VMs open to all incoming traffic. In a production environment, you would provide specific source addresses or subnets to allow instead of 0.0.0.0/0. **
+    1.  ![security group](../img/aws_security_group.png)
+14. Click **Review and Launch**
+15. Ignore the warning. Click **Launch**
+16. Create a new RSA key pair. Save the downloaded private key file in the .ssh folder of this project so both members can use the key to access the VMs. The file created was `aws-keypair.pem`. Since this repo is private, this is fine. Generally, for production environments, it would be better for each member to have their own private key.
+17. Run `ssh-add <private key file>` so that you can use it for key-based SSH authentication to the new VMs.
+18. Change the mode of that file to `600`: `chmod 600 <downloaded private key file>`.
+19. Finish launching the instances, and then click **View Instances** and wait for them to launch.
+20. Perform all of the milestone 1 cloud VM steps and the milestone 2 cloud VM steps on this new pair of AWS EC2 instances, then run the tests again, passing in `--cloud_platform aws` to the driver instead of `--cloud_platform chameleon`
 Store the aws addresses in the config.json file, under the `aws` key belonging to the `cloud_hosts` JSON dictionary.
 ## GCP
 Optionally do the same for Google Cloud Platform, and execute driver instead with `--cloud_platform gcp`. Store the GCP addresses in the `config.json` file, under the `gcp` key belonging to the `cloud_hosts` JSON dictionary.

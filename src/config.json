@@ -1,5 +1,5 @@
 {
-   "cloud_hosts": {
+    "cloud_hosts": {
         "chameleon": [{
                 "private": "10.60.5.84",
                 "public": "129.114.25.176"
@@ -10,19 +10,19 @@
             }
         ],
         "aws": [{
-                "private": "172.31.8.222",
-                "public": "54.156.171.6"
+                "private": "172.31.84.235",
+                "public": "18.212.178.41"
             },
             {
-                "private": "172.31.13.102",
-                "public": "52.21.243.110"
+                "private": "172.31.84.133",
+                "public": "54.166.29.3"
             }
         ],
         "gcp": [
 
         ]
 
-    }, 
+    },
     "couchdb": {
         "server": "localhost",
         "user": "admin",
