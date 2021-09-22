@@ -7,20 +7,22 @@ from lib.producer import Producer
 from lib.consumer import Consumer
 
 class Driver:
-
-    def __init__(self, cloud_provider, verbose=False):
-        self.setup_logging(verbose)
-        self.cloud_provider=cloud_provider
+ 
+    def __init__(self,verbose=False, cloud_platform="chameleon"): 
+        self.setup_logging(verbose) 
         self.sink_host = None
         self.consumer_host = None
         self.bootstrap_server = None
         self.couchdb_server = None
         self.couchdb_user = None
-        self.couchdb_password = None
+        self.couchdb_password = None 
+        self.cloud_platform = cloud_platform 
         self.configure()
 
-    def run_consumer(self, topic='stock-market-data', verbose=False):
-        """ Method to drive a Kafka Consumer process (run this from a Cloud VM where Apache Kafka is installed) """
+    def run_consumer(self, topic='stock-market-data', verbose=False, save_data=False):
+        """ Method to drive a Kafka Consumer process (run this from a Cloud VM where Apache Kafka is installed)
+        If save_data, save into couchdb (run this from a Cloud VM where both Apache Kafka and Apache CouchDB are installed
+        """
         self.info("Running Kafka Consumer...")
         self.consumer = Consumer(
             verbose=verbose,
@@ -31,7 +33,9 @@ class Driver:
             couchdb_password = self.couchdb_password,
             couchdb_database = self.couchdb_database
         )
-        self.consumer.consume()
+        if save_data:
+            self.consumer.connect_couchdb()
+        self.consumer.consume(save_data=save_data)
 
     def run_consumer_couchdb(self, topic='stock-market-data', verbose=False):
         """ Method to drive a Kafka Consumer process and then save into couchdb 
@@ -98,11 +102,8 @@ class Driver:
         )
         with open(config_file) as f:
             try:
-                config = json.load(f)
-                if self.cloud_provider == 'cc':
-                    cloud_hosts = config['cc_hosts']
-                elif self.cloud_provider == 'aws':
-                    cloud_hosts = config['aws_hosts']
+                config = json.load(f) 
+                cloud_hosts = config['cloud_hosts'][self.cloud_platform] 
                 # Should be 2 VMs.
                 # First will run Kafka Broker, Zookeeper, and Consumer.
                 self.consumer_host = cloud_hosts[0]
@@ -126,6 +127,7 @@ class Driver:
 parser = argparse.ArgumentParser(
     description='pass arguments to run the driver for the project'
 )
+parser.add_argument('--cloud_platform', default='chameleon', choices=['chameleon','aws','gcp'], help='indicate which cloud platform to use')
 parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
 parser.add_argument('-t', '--topic',
     help='topic to produce (if running producer with -p) or consume (if running consumer with -c)',
@@ -139,31 +141,29 @@ parser.add_argument('-s', '--sleep_interval', default=1, type=int,
 parser.add_argument('-ss', '--stock_symbol', default='AMZN', help='stock symbol to produce data for', type=str)
 
 parser.add_argument('-c', '--run_consumer', help='whether to run consumer', action='store_true')
-parser.add_argument('-cb', '--run_consumer_couchdb', help='whether to run consumer and then save to couchdb', action='store_true')
-parser.add_argument('-cp', '--cloud_provider', help='choose cc or aws', type=str, required=True)
+parser.add_argument('-d', '--dump', help='whether consumer should dump data/save to couchdb, only run with -c', action='store_true')
 
 
 args = parser.parse_args()
-driver = Driver(cloud_provider=args.cloud_provider, verbose=args.verbose)
+
+driver = Driver(
+    verbose=args.verbose,
+    cloud_platform=args.cloud_platform) 
 
 if args.run_producer:
-    producer_alias = args.producer_alias
-    topic = args.topic
-    stock_symbol = args.stock_symbol
-    sleep_interval = args.sleep_interval
     driver.run_producer(
-        topic=topic,
-        producer_alias=producer_alias,
-        stock_symbol=stock_symbol,
+        topic=args.topic,
+        producer_alias=args.producer_alias ,
+        stock_symbol=args.stock_symbol ,
         num_messages=args.num_messages,
-        sleep_interval=sleep_interval,
+        sleep_interval=args.sleep_interval,
         verbose=args.verbose
     )
 elif args.run_consumer:
-    topic = args.topic
     driver.run_consumer(
-        topic=topic,
-        verbose=args.verbose
+        topic=args.topic,
+        verbose=args.verbose,
+        save_data=args.dump
     )
 elif args.run_consumer_couchdb:
     topic = args.topic

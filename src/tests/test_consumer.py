@@ -3,6 +3,8 @@ from unittest import TestCase
 import os
 import json
 
+# Test runs against chameleon cloud platform hosts. Change dictionary key
+# to aws or gcp to test against another platform.
 class TestConsumer(TestCase):
     def setUp(self):
         ## Set up the bootstrap server using config.json
@@ -10,7 +12,7 @@ class TestConsumer(TestCase):
             os.path.dirname(
                 os.path.dirname(__file__)), 'config.json'))
         config = json.load(config_file)
-        self.bootstrap_server = config['cloud_hosts'][0]['public']
+        self.bootstrap_server = config['cloud_hosts']['chameleon'][0]['public']
         config_file.close()
 
     def test_connection(self):

@@ -22,11 +22,7 @@ class Consumer:
         self.couchdb_database = couchdb_database
 
     def connect_couchdb(self):
-        # couchdb connection
-        # self.info(f'couchdb_user: {self.couchdb_user}')
-        # self.info(f'couchdb_password: {self.couchdb_password}')
-        # self.info(f'couchdb_server: {self.couchdb_server}')
-        # self.info(f'full address: http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}:5984/')
+        # couchdb connection  
         self.couch = couchdb.Server(f"http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}:5984/")
         # create the database if not existing, get the database if already existing
         self.info('Get a DataBase to store the messages')
@@ -34,28 +30,22 @@ class Consumer:
             self.db = self.couch.create(self.couchdb_database)
         except:
             self.db = self.couch[self.couchdb_database]
-
-    def consume(self):
+ 
+    def consume(self, save_data=False): 
         """ Method to run consumption of messages until messages no longer arrive """
         self.info('Beginning consumption')
         for msg in self.kafka_consumer:
             self.info(
                 f'Receiving message: {json.loads(str(msg.value, "ascii"))}'
             )
-        self.kafka_consumer.close()
-
-    def consume_and_save(self):
-         """ Method to run consumption of messages and then save into couchdb
-         until messages no longer arrive """
-         self.info('Beginnning consumption and save to CouchDB')
-         for msg in self.kafka_consumer:
-             self.info(f'Receiving message: {json.loads(str(msg.value, "ascii"))}')
-             message = json.loads(str(msg.value, "ascii"))
-             self.db.save(message)
-             self.info(f'Return message from couchdb: {message}')
-         self.kafka_consumer.close()
-
-
+            if save_data:
+                self.info(
+                    f'Saving to database!'
+                )
+                msg = json.loads(str(msg.value, "ascii"))
+                self.db.save(msg)
+        self.kafka_consumer.close()  
+        
     def setup_logging(self, verbose):
         """ set up self.logger for producer logging """
         self.logger = logging.getLogger('consumer')
