@@ -1,5 +1,5 @@
 {
-    "cloud_hosts": {
+   "cloud_hosts": {
         "chameleon": [{
                 "private": "10.60.5.84",
                 "public": "129.114.25.176"
@@ -22,7 +22,7 @@
 
         ]
 
-    },
+    }, 
     "couchdb": {
         "server": "localhost",
         "user": "admin",

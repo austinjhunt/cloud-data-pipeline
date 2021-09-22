@@ -7,16 +7,16 @@ from lib.producer import Producer
 from lib.consumer import Consumer
 
 class Driver:
-
-    def __init__(self,verbose=False, cloud_platform="chameleon"):
-        self.setup_logging(verbose)
+ 
+    def __init__(self,verbose=False, cloud_platform="chameleon"): 
+        self.setup_logging(verbose) 
         self.sink_host = None
         self.consumer_host = None
         self.bootstrap_server = None
         self.couchdb_server = None
         self.couchdb_user = None
-        self.couchdb_password = None
-        self.cloud_platform = cloud_platform
+        self.couchdb_password = None 
+        self.cloud_platform = cloud_platform 
         self.configure()
 
     def run_consumer(self, topic='stock-market-data', verbose=False, save_data=False):
@@ -36,6 +36,25 @@ class Driver:
         if save_data:
             self.consumer.connect_couchdb()
         self.consumer.consume(save_data=save_data)
+
+    def run_consumer_couchdb(self, topic='stock-market-data', verbose=False):
+        """ Method to drive a Kafka Consumer process and then save into couchdb 
+        (run this from a Cloud VM where both Apache Kafka and Apache CouchDB are installed)  
+        """
+        self.info("Running Kafka Consumer...")
+        self.consumer = Consumer(
+            verbose=verbose,
+            bootstrap_server=self.bootstrap_server,
+            topics=[topic],
+            couchdb_server = self.couchdb_server,
+            couchdb_user = self.couchdb_user,
+            couchdb_password = self.couchdb_password,
+            couchdb_database = self.couchdb_database
+        )
+        # first connect to couchdb 
+        # then consume the message and save into couchdb
+        self.consumer.connect_couchdb()
+        self.consumer.consume_and_save()
 
     def run_producer(self,topic='stock-market-data', producer_alias="Producer 1",stock_symbol="AMZN",
         sleep_interval=1, verbose=False,num_messages=100):
@@ -83,8 +102,8 @@ class Driver:
         )
         with open(config_file) as f:
             try:
-                config = json.load(f)
-                cloud_hosts = config['cloud_hosts'][self.cloud_platform]
+                config = json.load(f) 
+                cloud_hosts = config['cloud_hosts'][self.cloud_platform] 
                 # Should be 2 VMs.
                 # First will run Kafka Broker, Zookeeper, and Consumer.
                 self.consumer_host = cloud_hosts[0]
@@ -129,7 +148,7 @@ args = parser.parse_args()
 
 driver = Driver(
     verbose=args.verbose,
-    cloud_platform=args.cloud_platform)
+    cloud_platform=args.cloud_platform) 
 
 if args.run_producer:
     driver.run_producer(
@@ -145,4 +164,10 @@ elif args.run_consumer:
         topic=args.topic,
         verbose=args.verbose,
         save_data=args.dump
+    )
+elif args.run_consumer_couchdb:
+    topic = args.topic
+    driver.run_consumer_couchdb(
+        topic=topic,
+        verbose=args.verbose
     )
