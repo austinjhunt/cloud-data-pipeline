@@ -1,0 +1,2 @@
+## Programming Assignment 1
+Programming assignment 1 for Vanderbilt University's CS 5287: Principles of Cloud Computing is focused on creating the foundational pipeline architecture using cloud infrastructure without any automation or dev ops tool integrations. All steps are meticulously documented so they can later be automated with tools like Vagrant and Ansible.

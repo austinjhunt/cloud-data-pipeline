@@ -1,7 +1,4 @@
-# CS 5287: Principles of Cloud Computing
-## Programming Assignment 1
-Programming assignment 1 for Vanderbilt University's CS 5287: Principles of Cloud Computing
-
+# CS 5287: Principles of Cloud Computing - Data Pipelining with Kafka, Zookeeper, and CouchDB
 This project uses [kafka-python](https://pypi.org/project/kafka-python/), a Python client for the [Apache Kafka](https://kafka.apache.org/), "an open-source distributed event streaming platform used by thousands of companies for high-performance data pipelines, streaming analytics, data integration, and mission-critical applications".
 
 The goal of the project is to gain experience implementing a data pipeline using clustered cloud architecture. We aim to implement a pipeline with the architecture shown in the image below:
