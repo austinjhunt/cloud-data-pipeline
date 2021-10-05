@@ -21,13 +21,22 @@ We intend to run one producer on each team member's local VirtualBox VM, and we 
   - Kafka Broker id=1
   - CouchDB
 
-### Milestones
-#### Milestone 1 - Due 9/15/2021
+### Assignments
+The following is a breakdown of the individual assignments associated with this repository and their corresponding milestones. Each assignment has its own documentation directory. Each milestone has its own README.
+#### Programming Assignment 1
+Programming Assignment 1 is focused on creating the foundational pipeline architecture using cloud infrastructure without any automation or dev ops tool integrations. All steps are meticulously documented so they can later be automated with tools like Vagrant and Ansible.
+
+##### Milestones
+##### Milestone 1 - Due 9/15/2021
 - [Documentation](milestones/M1README.md)
 - [Video](https://www.youtube.com/watch?v=TflXLZmG7cA)
-#### Milestone 2 - Due 9/22/2021
+##### Milestone 2 - Due 9/22/2021
 - [Documentation](milestones/M2README.md)
 - [Video](https://www.youtube.com/watch?v=wKBLXW1JScE)
-#### Milestone 3 - Due 9/29/2021
+##### Milestone 3 - Due 9/29/2021
 - [Documentation](milestones/M3README.md)
 - [Video](https://youtu.be/crXXRN27cIg)
+
+
+#### Programming Assignment 2
+Programming Assignment 2 is focused on the automation of all steps taken in assignment 1 using Vagrant and Ansible. The idea is to automatically provision the pipeline architecture and automatically create and start the actual data pipeline, all using a single command: `vagrant up`.
