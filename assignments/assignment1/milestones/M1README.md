@@ -1,4 +1,5 @@
 # Milestone 1
+## Requirements
 1. VMs on teammember laptops should be running with needed packages (Python3, producer code, etc). These are VMs VM1.1, VM1.2... VM1.n as shown in the figure.
    1. Complete.
 2. VM2 and VM3 in Chameleon (and eventually on AWS for milestone 2) should be up with Python3. They should be reachable from outside via ssh.
