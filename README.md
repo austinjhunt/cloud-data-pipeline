@@ -25,15 +25,19 @@ Programming Assignment 1 is focused on creating the foundational pipeline archit
 
 ##### Milestones
 ##### Milestone 1 - Due 9/15/2021
-- [Documentation](milestones/M1README.md)
+- [Documentation](assignments/assignment1/milestones/M1README.md)
 - [Video](https://www.youtube.com/watch?v=TflXLZmG7cA)
 ##### Milestone 2 - Due 9/22/2021
-- [Documentation](milestones/M2README.md)
+- [Documentation](assignments/assignment1/milestones/M2README.md)
 - [Video](https://www.youtube.com/watch?v=wKBLXW1JScE)
 ##### Milestone 3 - Due 9/29/2021
-- [Documentation](milestones/M3README.md)
+- [Documentation](assignments/assignment1/milestones/M3README.md)
 - [Video](https://youtu.be/crXXRN27cIg)
 
 
 #### Programming Assignment 2
 Programming Assignment 2 is focused on the automation of all steps taken in assignment 1 using Vagrant and Ansible. The idea is to automatically provision the pipeline architecture and automatically create and start the actual data pipeline, all using a single command: `vagrant up`.
+##### Milestone 1 - Due 10/6/2021
+- [Documentation](assignments/assignment2/milestones/M1README.md)
+- [Video 1](https://youtu.be/xMSoP5IG0pU)
+- [Video 2](https://youtu.be/mAWtgLduiPc)
