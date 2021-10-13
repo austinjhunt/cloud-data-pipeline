@@ -20,8 +20,8 @@
 
 ## Milestone 2 Steps Taken (due Week 5, 9/22/2021) - ([Video Demo](https://www.youtube.com/watch?v=wKBLXW1JScE))
 ### VirtualBox VM Prep
-  - Project was already cloned to VirtualBox VM in Milestone 1 with: `git clone https://github.com/austinjhunt/cs5287progassign1.git`
-  - Navigate into the project: `cd cs5287progassign1`
+  - Project was already cloned to VirtualBox VM in Milestone 1 with: `git clone https://github.com/austinjhunt/cs5287datapipeline.git`
+  - Navigate into the project: `cd cs5287datapipeline`
   - Create a virtual environment to isolate the Python package installations to this project: `python3 -m venv venv`
   - Activate the virtual environment: `source venv/bin/activate`
   - Install wheel: `pip install wheel`
@@ -33,8 +33,8 @@
      - Install (but don't start yet) Apache Kafka using [these instructions](https://www.digitalocean.com/community/tutorials/how-to-install-apache-kafka-on-ubuntu-20-04)
      - You need to modify the Kafka Config to allow the public IP of the Kafka server to be used. Add the following line to the end of the `/home/kafka/kafka/config/server.properties` file: `advertised.listeners=PLAINTEXT://<PUBLIC IP OF CURRENT VM>:9092`
      - Set up Python3 (already done in Milestone 1) using [these instructions](https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-programming-environment-on-an-ubuntu-20-04-server).
-     - Clone this repo: `git clone https://github.com/austinjhunt/cs5287progassign1.git`
-     - Navigate into the repo: `cd cs5287progassign1`
+     - Clone this repo: `git clone https://github.com/austinjhunt/cs5287datapipeline.git`
+     - Navigate into the repo: `cd cs5287datapipeline`
      - Execute `ufw.sh` with `sudo` to set up local firewall rules: `sudo ./ufw.sh`
      - Create and activate a Python3 virtual environment: `python3 -m venv venv && source venv/bin/activate`
      - Run `pip install wheel` then install the Python requirements for the project: `pip install -r requirements.txt`

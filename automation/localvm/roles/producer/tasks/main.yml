@@ -1,0 +1,5 @@
+# Set up a local producer
+- name: Run a Kafka Producer
+  shell:
+    chdir: /vagrant/src
+    cmd: python3 driver.py -p -pa "VagrantAnsibleProducer" --num_messages 20 -t stock-market-data -ss AMZN --cloud_platform aws -v
