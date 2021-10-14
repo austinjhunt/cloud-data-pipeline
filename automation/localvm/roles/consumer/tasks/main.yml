@@ -1,7 +1,8 @@
 - name: Run Kafka Consumer
   shell:
     chdir: /vagrant/src
-    cmd: "python3 driver.py -c -v -d -t stock-market-data --bootstrap {{ ec2.instances[0].public_ip }}"
+    cmd: |
+      "python3 driver.py -c -v -d -t stock-market-data --bootstrap_server {{ ec2.instances[0].public_ip }} --data_sink_server {{ ec2.instances[1].public_ip }}"
   # Don't wait
   async: 60
   poll: 0
