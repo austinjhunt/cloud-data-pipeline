@@ -8,15 +8,15 @@ from lib.consumer import Consumer
 
 class Driver:
 
-    def __init__(self,verbose=False, cloud_platform="chameleon"):
+    def __init__(self,verbose=False, cloud_platform='', bootstrap_server='', data_sink_server=''):
         self.setup_logging(verbose)
-        self.sink_host = None
         self.consumer_host = None
-        self.bootstrap_server = None
         self.couchdb_server = None
         self.couchdb_user = None
         self.couchdb_password = None
         self.cloud_platform = cloud_platform
+        self.bootstrap_server = bootstrap_server
+        self.data_sink_server = data_sink_server
         self.configure()
 
     def run_consumer(self, topic='stock-market-data', verbose=False, save_data=False):
@@ -84,15 +84,21 @@ class Driver:
         with open(config_file) as f:
             try:
                 config = json.load(f)
-                cloud_hosts = config['cloud_hosts'][self.cloud_platform]
-                # Should be 2 VMs.
-                # First will run Kafka Broker, Zookeeper, and Consumer.
-                self.consumer_host = cloud_hosts[0]
-                self.bootstrap_server = self.consumer_host['public']
-                # Second will Run Kafka Broker and CouchDB, functioning as sink.
-                self.sink_host = cloud_hosts[1]
+                if self.cloud_platform:
+                    cloud_hosts = config['cloud_hosts'][self.cloud_platform]
+                    # Should be 2 VMs.
+                    # First will run Kafka Broker, Zookeeper, and Consumer.
+                    self.consumer_host = cloud_hosts[0]
+                    self.bootstrap_server = self.consumer_host['public']
+                    # Second will Run Kafka Broker and CouchDB, functioning as sink.
+                    self.data_sink_server = cloud_hosts[1]
+
+                elif self.bootstrap_server:
+                    self.consumer_host = self.data_sink_server
+                    # bootstrap_server and data_sink_server are already set
+
                 self.debug(f"Consumer host: {self.consumer_host}")
-                self.debug(f"Sink Host: {self.sink_host}")
+                self.debug(f"Sink Host: {self.data_sink_server}")
 
                 # couch db admin name and password
                 couchdb = config['couchdb']
@@ -108,7 +114,20 @@ class Driver:
 parser = argparse.ArgumentParser(
     description='pass arguments to run the driver for the project'
 )
-parser.add_argument('--cloud_platform', default='chameleon', choices=['chameleon','aws','gcp'], help='indicate which cloud platform to use')
+parser.add_argument('--cloud_platform', default='', choices=['chameleon','aws','gcp'], help='indicate which cloud platform to use')
+
+# Pass these two if not using --cloud_platform
+parser.add_argument('-b','--bootstrap_server', type=str, default='', help=(
+'provide the public IP address of the Kafka bootstrap server '
+'(alternative to --cloud_platform, which pulls bootstrap '
+'address from  static config file)')
+)
+parser.add_argument('-sink','--data_sink_server', type=str, default='', help=(
+'provide the public IP address of the server on which the data sink (CouchDB) will run '
+'(alternative to --cloud_platform, which pulls address from static config file)')
+)
+
+
 parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
 parser.add_argument('-t', '--topic',
     help='topic to produce (if running producer with -p) or consume (if running consumer with -c)',
@@ -126,10 +145,22 @@ parser.add_argument('-d', '--dump', help='whether consumer should dump data/save
 
 
 args = parser.parse_args()
+if args.cloud_platform == '' and (args.bootstrap_server == '' or args.data_sink_server == ''):
+    # If not providing
+    raise Exception('You need to pass one of --cloud_platform PLATFORM or (BOTH --bootstrap_server PUBLIC_IP and --data_sink_server PUBLIC_IP)')
 
-driver = Driver(
-    verbose=args.verbose,
-    cloud_platform=args.cloud_platform)
+elif args.cloud_platform != '':
+    driver = Driver(
+        verbose=args.verbose,
+        cloud_platform=args.cloud_platform
+        )
+
+elif args.bootstrap_server != '' and args.data_sink_server != '':
+    driver = Driver(
+        verbose=args.verbose,
+        bootstrap_server=args.bootstrap_server,
+        data_sink_server=args.data_sink_server
+        )
 
 if args.run_producer:
     driver.run_producer(

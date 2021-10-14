@@ -27,9 +27,8 @@
   gather_facts: yes
   roles:
     - couchdb
+    - cloud-vm-1
     - consumer
-
-
 
 # LocalVM should terminate the cloud infrastructure now
 - hosts: localvm
