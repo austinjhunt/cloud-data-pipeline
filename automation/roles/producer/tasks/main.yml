@@ -2,6 +2,7 @@
   shell:
     chdir: /vagrant/src
     # Create a Kafka producer. Use first EC2 instance as bootstrap server. 2nd as data sink.
-    cmd: "python3 driver.py -v -p -pa VagrantAnsibleProducer -n 50 -t stock-market-data -ss AMZN  --bootstrap_server {{ hostvars['127.0.0.1'].ec2_1.instances[0].public_ip_address }} --data_sink_server {{ hostvars['127.0.0.1'].ec2_2.instances[0].public_ip_address }} > producer.log"
+    cmd: "python3 driver.py -v -p -pa VagrantAnsibleProducer -n 5 -t stock-market-data -ss AMZN  --bootstrap_server {{ hostvars['127.0.0.1'].ec2_1.instances[0].public_ip_address }} --data_sink_server {{ hostvars['127.0.0.1'].ec2_2.instances[0].public_ip_address }} > producer.log"
   async: 200
   poll: 0
+  register: producer

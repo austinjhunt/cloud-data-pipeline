@@ -19,6 +19,7 @@
     dest: /home/ubuntu/cs5287datapipeline
     clone: yes
     update: yes
+    force: yes
 
 - name: Install OpenJDK JRE
   apt:
@@ -84,12 +85,11 @@
   - "zookeeper.service"
   - "kafka.service"
 
-- name: Start and enable kafka and zookeeper
+- name: Stop Kafka and Zookeeper
   become: yes
   systemd:
     name: "{{ item }}"
-    enabled: yes
-    state: started
+    state: stopped
   loop:
   - kafka
   - zookeeper
@@ -99,3 +99,4 @@
     chdir:  /home/ubuntu/cs5287datapipeline
     requirements: /home/ubuntu/cs5287datapipeline/requirements.txt
     state: present
+

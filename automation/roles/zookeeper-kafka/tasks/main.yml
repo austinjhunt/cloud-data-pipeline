@@ -1,0 +1,9 @@
+- name: Start and enable kafka and zookeeper
+  become: yes
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: restarted
+  loop:
+  - kafka
+  - zookeeper

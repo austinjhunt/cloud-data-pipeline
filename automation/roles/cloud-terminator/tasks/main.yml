@@ -30,16 +30,6 @@
     state: absent
     wait: yes
 
-- name: Disassociate Elastic IPs
-  become: false
-  environment: "{{ env_vars }}"
-  community.aws.ec2_eip:
-    aws_access_key: "{{ aws_access_key_id.stdout }}"
-    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
-    state: absent
-    tag_name: app
-    tag_value: datapipeline
-
 - name: Remove security group used to allow host reachability
   become: false
   environment: "{{ env_vars }}"
