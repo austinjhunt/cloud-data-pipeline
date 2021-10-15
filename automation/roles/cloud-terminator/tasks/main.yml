@@ -21,19 +21,24 @@
 - name: Remove EC2 instances
   become: false
   environment: "{{ env_vars }}"
-  amazon.aws.ec2:
+  community.aws.ec2_instance:
     aws_access_key: "{{ aws_access_key_id.stdout }}"
     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
-    key_name: aws-keypair-2
-    # Ubuntu 20.04 LTS AMI
-    image: ami-09e67e426f25ce0d7
+    filters:
+      - "tag:app": datapipeline
+      - instance-state-name: running
     state: absent
     wait: yes
-    # Terminate all instances
-    instance_ids: '{{ ec2.instance_ids }}'
-    instance_tags:
-      app: datapipeline
-    region: us-east-1
+
+- name: Disassociate Elastic IPs
+  become: false
+  environment: "{{ env_vars }}"
+  community.aws.ec2_eip:
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    state: absent
+    tag_name: app
+    tag_value: datapipeline
 
 - name: Remove security group used to allow host reachability
   become: false

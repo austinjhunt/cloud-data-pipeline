@@ -23,7 +23,7 @@
       app: datapipeline
   register: datapipeline_internet_gateway
 
-- name: Create a VPC Subnet with a known ID for later use
+- name: Create a VPC Subnet
   become: false
   environment: "{{ env_vars }}"
   amazon.aws.ec2_vpc_subnet:
@@ -46,6 +46,8 @@
     vpc_id: "{{ datapipeline_vpc.vpc.id }}"
     region: us-east-1
     state: present
+    tags:
+      Name: datapipeline_public_route_table
     subnets:
       - "{{ datapipeline_vpc_subnet.subnet.id }}"
     routes:
@@ -91,71 +93,94 @@
     state: present
     region: us-east-1
 
-- name: Create two EC2 instances
+- name: Create EC2 Instance 1
   become: false
   environment: "{{ env_vars }}"
-  amazon.aws.ec2:
-    vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
+  community.aws.ec2_instance:
     aws_access_key: "{{ aws_access_key_id.stdout }}"
     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    filters:
+      "tag:app": datapipeline
+      "tag:Name": cloudvm1
     key_name: aws-keypair-2
     instance_type: t2.medium
-    instance_tags:
+    name: cloudvm1
+    vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
+    network:
+      assign_public_ip: yes
+      delete_on_termination: yes
+    region: us-east-1
+    tags:
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
       app: datapipeline
     # Ubuntu 20.04 LTS AMI
-    image: ami-09e67e426f25ce0d7
-    state: present
+    image_id: ami-09e67e426f25ce0d7
+    state: running
     # Wait for the instances to reach their desired states before returning.
     # Does not wait for SSH, see the 'wait_for_connection' example for details.
     wait: yes
     # Security group to set up appropriate firewall rules
-    group: kafka-couchdb-zookeeper-security
-    count: 2
-    assign_public_ip: yes
+    security_group: kafka-couchdb-zookeeper-security
+  register: ec2_1
+
+- name: Create EC2 Instance 2
+  become: false
+  environment: "{{ env_vars }}"
+  community.aws.ec2_instance:
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    filters:
+      "tag:app": datapipeline
+      "tag:Name": cloudvm2
+    key_name: aws-keypair-2
+    instance_type: t2.medium
+    name: cloudvm2
+    vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
+    network:
+      assign_public_ip: yes
+      delete_on_termination: yes
     region: us-east-1
-  register: ec2
+    tags:
+      # Add tags so you can start / stop by tags. Running twice should not create duplicates.
+      app: datapipeline
+    # Ubuntu 20.04 LTS AMI
+    image_id: ami-09e67e426f25ce0d7
+    state: running
+    # Wait for the instances to reach their desired states before returning.
+    # Does not wait for SSH, see the 'wait_for_connection' example for details.
+    wait: yes
+    # Security group to set up appropriate firewall rules
+    security_group: kafka-couchdb-zookeeper-security
+  register: ec2_2
 
-- name: Create cloud group for BOTH EC2 instances
-  group_by:
-    key: cloud
-
-- name: Create cloudvm0 group (alias) for first EC2 instance
-  group_by:
-    key: cloudvm0
-
-- name: Create cloudvm1 group (alias) for second EC2 instance
-  group_by:
-    key: cloudvm1
-
-- name: Add BOTH EC2 instances to cloud group
-# Reference: https://newbedev.com/getting-the-ip-address-attributes-of-the-aws-instance-created-using-ansible
-  add_host:
-    hostname: "{{ item.public_ip }}"
-    ansible_ssh_private_key_file: "{{ inventory_dir | dirname | dirname }}/.ssh/aws-keypair-2.pem"
-    # Cloud VMs collectively called cloud
-    groupname: cloud
-  with_items: "{{ ec2.instances }}"
-
-- name: "Add first EC2 instance {{ ec2.instances[0].public_ip }} to cloudvm0 group"
-# Reference: https://newbedev.com/getting-the-ip-address-attributes-of-the-aws-instance-created-using-ansible
-  add_host:
-    hostname: "{{ ec2.instances[0].public_ip }}"
-    ansible_ssh_private_key_file: "{{ inventory_dir | dirname | dirname }}/.ssh/aws-keypair-2.pem"
-    # Cloud VMs collectively called cloud
-    groupname: cloudvm0
-
-- name: "Add second EC2 instance {{ ec2.instances[1].public_ip }} to cloudvm1 group"
-# Reference: https://newbedev.com/getting-the-ip-address-attributes-of-the-aws-instance-created-using-ansible
-  add_host:
-    hostname: "{{ ec2.instances[1].public_ip }}"
-    ansible_ssh_private_key_file: "{{ inventory_dir | dirname | dirname }}/.ssh/aws-keypair-2.pem"
-    # Cloud VMs collectively called cloud
-    groupname: cloudvm1
-
-- name: Wait for SSH to come up # SSH needs to work for rest of playbook to continue
+- name: Wait for SSH to come up on VM 1 # SSH needs to work for rest of playbook to continue
   wait_for:
-    host: "{{ item.public_ip }}"
+    host: "{{ item.public_ip_address }}"
     port: 22
     state: started
-  with_items: "{{ ec2.instances }}"
+  with_items: "{{ ec2_1.instances }}"
+
+- name: Wait for SSH to come up on VM 2 # SSH needs to work for rest of playbook to continue
+  wait_for:
+    host: "{{ item.public_ip_address }}"
+    port: 22
+    state: started
+  with_items: "{{ ec2_2.instances }}"
+
+- name: Add EC2 instance 1 to groups cloud and cloudvm0
+  add_host:
+    name: "{{ item.public_ip_address }}"
+    ansible_ssh_private_key_file: "{{ playbook_dir }}/.ssh/aws-keypair-2.pem"
+    groups:
+      - cloud
+      - cloudvm0
+  with_items: "{{ ec2_1.instances }}"
+
+- name: Add EC2 instance 2 to groups cloud and cloudvm1
+  add_host:
+    name: "{{ item.public_ip_address }}"
+    ansible_ssh_private_key_file: "{{ playbook_dir }}/.ssh/aws-keypair-2.pem"
+    groups:
+      - cloud
+      - cloudvm1
+  with_items: "{{ ec2_2.instances }}"

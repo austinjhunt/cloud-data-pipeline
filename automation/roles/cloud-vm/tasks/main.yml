@@ -60,6 +60,7 @@
   unarchive:
     src: /home/kafka/Downloads/kafka.tgz
     dest: /home/kafka/kafka/
+    remote_src: yes
     extra_opts: [--strip-components=1]
 
 - name: Create firewall rules for Zookeeper, Kafka, and CouchDB
@@ -93,14 +94,8 @@
   - kafka
   - zookeeper
 
-- name: Install Python virtualenv
-  pip:
-    name: virtualenv
-
 - name: Install Python requirements for project
   pip:
     chdir:  /home/ubuntu/cs5287datapipeline
     requirements: /home/ubuntu/cs5287datapipeline/requirements.txt
-    virtualenv: venv
-    virtualenv_command: virtualenv
     state: present
