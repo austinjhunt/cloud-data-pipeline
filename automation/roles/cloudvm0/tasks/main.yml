@@ -1,0 +1,6 @@
+## Use the following tasks to update the config to use a cluster setup.
+- name: Update advertised.listeners in server.properties to use public address
+  lineinfile:
+    path: /home/kafka/kafka/config/server.properties
+    regexp: 'advertised.listeners=.*'
+    line: "advertised.listeners=PLAINTEXT://{{ hostvars['127.0.0.1'].ec2_1.instances[0].public_ip_address }}:9092"

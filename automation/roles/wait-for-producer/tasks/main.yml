@@ -1,0 +1,6 @@
+- name: Check on Producer async task
+  async_status:
+    jid: "{{ producer.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 30

@@ -23,8 +23,27 @@
     name: couchdb
     update_cache: yes
 
-- name: Set couchdb bind chttpd bind address to 0.0.0.0
+- name: Stop couchdb
+  become: yes
+  systemd:
+    name: couchdb
+    state: stopped
+
+- name: Set couchdb bind chttpd bind address to 0.0.0.0 in local.ini
   lineinfile:
-    path: /home/kafka/kafka/config/server.properties
+    path: /opt/couchdb/etc/local.ini
     regexp: 'bind_address.*'
     line: bind_address = 0.0.0.0
+
+- name: Create admin user for couchdb
+  lineinfile:
+    path: /opt/couchdb/etc/local.ini
+    regexp: 'admin ='
+    line: admin = 123456
+
+- name: Start and enable couchdb service
+  become: yes
+  systemd:
+    name: couchdb
+    enabled: yes
+    state: restarted

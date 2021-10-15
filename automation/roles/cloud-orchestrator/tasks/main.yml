@@ -100,19 +100,19 @@
     aws_access_key: "{{ aws_access_key_id.stdout }}"
     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
     filters:
-      "tag:app": datapipeline
-      "tag:Name": cloudvm1
+      "tag:app": 5287datapipeline
+      "tag:Name": cloudvm0
+    name: cloudvm0
+    tags:
+      # Add tags so you can start / stop by tags. Running twice should not create duplicates.
+      app: 5287datapipeline
     key_name: aws-keypair-2
     instance_type: t2.medium
-    name: cloudvm1
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
     network:
       assign_public_ip: yes
       delete_on_termination: yes
     region: us-east-1
-    tags:
-      # Add tags so you can start / stop by tags. Running twice should not create duplicates.
-      app: datapipeline
     # Ubuntu 20.04 LTS AMI
     image_id: ami-09e67e426f25ce0d7
     state: running
@@ -130,19 +130,19 @@
     aws_access_key: "{{ aws_access_key_id.stdout }}"
     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
     filters:
-      "tag:app": datapipeline
-      "tag:Name": cloudvm2
+      "tag:app": 5287datapipeline
+      "tag:Name": cloudvm1
+    name: cloudvm1
+    tags:
+      # Add tags so you can start / stop by tags. Running twice should not create duplicates.
+      app: 5287datapipeline
     key_name: aws-keypair-2
     instance_type: t2.medium
-    name: cloudvm2
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
     network:
       assign_public_ip: yes
       delete_on_termination: yes
     region: us-east-1
-    tags:
-      # Add tags so you can start / stop by tags. Running twice should not create duplicates.
-      app: datapipeline
     # Ubuntu 20.04 LTS AMI
     image_id: ami-09e67e426f25ce0d7
     state: running
