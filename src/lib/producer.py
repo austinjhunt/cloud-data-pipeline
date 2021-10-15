@@ -14,6 +14,7 @@ import json
 import time
 import datetime
 from kafka import KafkaProducer
+from kafka.errors import KafkaTimeoutError
 import yfinance
 import logging
 
@@ -37,6 +38,7 @@ class Producer:
         self.kafka_producer = KafkaProducer(
             bootstrap_servers=f'{bootstrap_server}:9092',
             api_version=(0,10,1),
+            request_timeout_ms=5000,
             # wait for leader to write to log; this controls the durability of records that are sent.
             acks=1)
 
@@ -79,7 +81,10 @@ class Producer:
                 'message_index': i
             }
             message = bytes(json.dumps(message), 'ascii')
-            self.kafka_producer.send(topic=topic, value=message)
-            self.kafka_producer.flush() # try to empty sending buffer
+            try:
+                self.kafka_producer.send(topic=topic, value=message)
+                self.kafka_producer.flush() # try to empty sending buffer
+            except KafkaTimeoutError as e:
+                self.error(f'Timeout error when sending message: {str(e)}')
             time.sleep(self.sleep_interval)
         self.kafka_producer.close ()

@@ -1,8 +1,0 @@
-- name: Run a Kafka Producer
-  shell:
-    chdir: /vagrant/src
-    cmd: |
-      "python3 driver.py -p -pa VagrantAnsibleProducer --num_messages 20 -t stock-market-data
-      -ss AMZN --bootstrap_server {{ ec2.instances[0].public_ip }} --data_sink_server {{ ec2.instances[1].public_ip }} -v"
-  async: 60
-  poll: 0

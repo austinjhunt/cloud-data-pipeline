@@ -23,13 +23,15 @@ class Consumer:
 
     def connect_couchdb(self):
         # couchdb connection
+        self.debug(f'Connecting to CouchDB server at: http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}:5984/"')
         self.couch = couchdb.Server(f"http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}:5984/")
         # create the database if not existing, get the database if already existing
-        self.info('Get a DataBase to store the messages')
         try:
             self.db = self.couch.create(self.couchdb_database)
+            self.debug(f"Successfully created new CouchDB database {self.couchdb_database}")
         except:
             self.db = self.couch[self.couchdb_database]
+            self.debug(f"Successfully connected to existing CouchDB database {self.couchdb_database}")
 
     def consume(self, save_data=False):
         """ Method to run consumption of messages until messages no longer arrive """

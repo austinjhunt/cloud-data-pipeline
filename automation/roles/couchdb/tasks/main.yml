@@ -22,3 +22,9 @@
   apt:
     name: couchdb
     update_cache: yes
+
+- name: Set couchdb bind chttpd bind address to 0.0.0.0
+  lineinfile:
+    path: /home/kafka/kafka/config/server.properties
+    regexp: 'bind_address.*'
+    line: bind_address = 0.0.0.0
