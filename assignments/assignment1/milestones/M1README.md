@@ -26,8 +26,8 @@
   - Log into your Ubuntu 20.04 VM once you've created it.
   - Open a Terminal window.
   - Set up Python 3 on your VM using [these instructions](https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-programming-environment-on-an-ubuntu-20-04-server).
-  - Clone the project repository: `git clone https://github.com/austinjhunt/cs5287progassign1.git`
-  - Navigate into the project: `cd cs5287progassign1`
+  - Clone the project repository: `git clone https://github.com/austinjhunt/cs5287datapipeline.git`
+  - Navigate into the project: `cd cs5287datapipeline`
   - Create a virtual environment to isolate the Python package installations to this project: `python3 -m venv venv`
   - Activate the virtual environment: `source venv/bin/activate`
   - Install the Python requirements: `pip install -r requirements.txt`

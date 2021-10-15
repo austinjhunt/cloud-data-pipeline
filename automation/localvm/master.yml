@@ -1,0 +1,47 @@
+---
+- hosts: localvm
+  # Ubuntu 20.04 and other versions of Debian Linux ship with Python 3 pre-installed. No need to install.
+  remote_user: vagrant
+  become: true
+  gather_facts: true
+  pre_tasks:
+    # set up the local VM with apt packages and python requirements before doing anything else
+    - name: Set up master playbook
+      import_tasks: setup-master.yml
+  roles:
+    # Orchestrate the creation of two cloud VMs
+    - cloud-orchestrator
+
+# Execute tasks on BOTH cloud VMs
+- hosts: cloud # dynamic group created by orchestrator (public addresses of EC2 instances)
+  become: yes
+  remote_user: ubuntu
+  gather_facts: yes
+  roles:
+    - cloud-vm
+
+# Execute tasks only on SECOND cloud VM (options are cloudvm0,cloudvm1)
+- hosts: cloudvm1
+  become: yes
+  remote_user: ubuntu
+  gather_facts: yes
+  roles:
+    - couchdb
+    - cloud-vm-1
+    - consumer
+
+# LocalVM should terminate the cloud infrastructure now
+- hosts: localvm
+  # Ubuntu 20.04 and other versions of Debian Linux ship with Python 3 pre-installed. No need to install.
+  remote_user: vagrant
+  become: true
+  gather_facts: true
+  pre_tasks:
+    # set up the local VM with apt packages and python requirements before doing anything else
+    - name: Set up!
+      import_tasks: setup-master.yml
+  roles:
+    - cloud-terminator
+
+
+...

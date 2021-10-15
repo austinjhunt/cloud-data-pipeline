@@ -1,0 +1,20 @@
+## Tasks that provision a consumer host
+## Our consumer is the second cloud VM - this VM will be broker id 1 to form the cluster.
+## Use the following tasks to update the config to use a cluster setup.
+- name: Update zookeeper.connect on VM2 server.properties
+  lineinfile:
+    path: /home/kafka/kafka/config/server.properties
+    regexp: 'zookeeper.connect=.*'
+    line: zookeeper.connect=hostvars[cloudvm0]['ansible_default_ipv4']['address']
+
+- name: Update advertised.listeners on VM2 server.properties
+  lineinfile:
+    path: /home/kafka/kafka/config/server.properties
+    regexp: 'advertised.listeners=.*'
+    line: advertised.listeners=PLAINTEXT://hostvars[cloudvm1]['ansible_default_ipv4']['address']
+
+- name: Update broker.id on VM2 server.properties
+  lineinfile:
+    path: /home/kafka/kafka/config/server.properties
+    regexp: 'broker.id=.*'
+    line: broker.id = 1

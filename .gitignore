@@ -2,3 +2,4 @@ venv
 .env
 .vagrant
 __pycache__
+setup-env.sh

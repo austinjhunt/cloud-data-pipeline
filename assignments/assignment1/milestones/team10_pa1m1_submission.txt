@@ -1,5 +1,5 @@
 BRIGHTSPACE REQUIRES FILE ATTACHMENT FOR SUBMISSION
-GitHub repository: https://github.com/austinjhunt/cs5287progassign1
+GitHub repository: https://github.com/austinjhunt/cs5287datapipeline
 Two videos:
 https://www.youtube.com/watch?v=TflXLZmG7cA
 https://www.youtube.com/watch?v=L9pj6Qzv2iM

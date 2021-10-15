@@ -1,0 +1,161 @@
+- name: Create a VPC
+  become: false
+  environment: "{{ env_vars }}"
+  amazon.aws.ec2_vpc_net:
+    name: datapipeline_vpc
+    cidr_block: 10.10.0.0/16
+    region: us-east-1
+    state: present
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+  register: datapipeline_vpc
+
+- name: Create an Internet Gateway and attach to VPC
+  become: false
+  environment: "{{ env_vars}} "
+  community.aws.ec2_vpc_igw:
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    vpc_id: "{{ datapipeline_vpc.vpc.id }}"
+    state: present
+    region: us-east-1
+    tags:
+      app: datapipeline
+  register: datapipeline_internet_gateway
+
+- name: Create a VPC Subnet with a known ID for later use
+  become: false
+  environment: "{{ env_vars }}"
+  amazon.aws.ec2_vpc_subnet:
+    cidr: 10.10.2.0/24
+    region: us-east-1
+    vpc_id: "{{ datapipeline_vpc.vpc.id }}"
+    state: present
+    tags:
+      name: datapipeline_vpc_subnet
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+  register: datapipeline_vpc_subnet
+
+- name: Create a public route table for VPC Subnet to allow internet access
+  become: false
+  environment: "{{ env_vars }}"
+  community.aws.ec2_vpc_route_table:
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    vpc_id: "{{ datapipeline_vpc.vpc.id }}"
+    region: us-east-1
+    state: present
+    subnets:
+      - "{{ datapipeline_vpc_subnet.subnet.id }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ datapipeline_internet_gateway.gateway_id }}"
+  register: public_route_table
+
+- name: Create a security group to allow host reachability
+  become: false
+  environment: "{{ env_vars }}"
+  amazon.aws.ec2_group:
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    description: security group for kafka, epmd, couchdb, zookeeper, ssh
+    name: kafka-couchdb-zookeeper-security
+    vpc_id: "{{ datapipeline_vpc.vpc.id }}"
+    rules:
+      - proto: tcp
+        ports:
+        - 22
+        cidr_ip: 0.0.0.0/0
+        rule_desc: ssh
+      - proto: tcp
+        ports:
+        - 2181
+        cidr_ip: 0.0.0.0/0
+        rule_desc: zookeeper
+      - proto: tcp
+        ports:
+        - 4369
+        cidr_ip: 0.0.0.0/0
+        rule_desc: erlang port mapper daemon (epmd)
+      - proto: tcp
+        ports:
+        - 5984
+        cidr_ip: 0.0.0.0/0
+        rule_desc: couchdb
+      - proto: tcp
+        ports:
+        - 9092
+        cidr_ip: 0.0.0.0/0
+        rule_desc: apache kafka
+    state: present
+    region: us-east-1
+
+- name: Create two EC2 instances
+  become: false
+  environment: "{{ env_vars }}"
+  amazon.aws.ec2:
+    vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    key_name: aws-keypair-2
+    instance_type: t2.medium
+    instance_tags:
+      # Add tags so you can start / stop by tags. Running twice should not create duplicates.
+      app: datapipeline
+    # Ubuntu 20.04 LTS AMI
+    image: ami-09e67e426f25ce0d7
+    state: present
+    # Wait for the instances to reach their desired states before returning.
+    # Does not wait for SSH, see the 'wait_for_connection' example for details.
+    wait: yes
+    # Security group to set up appropriate firewall rules
+    group: kafka-couchdb-zookeeper-security
+    count: 2
+    assign_public_ip: yes
+    region: us-east-1
+  register: ec2
+
+- name: Create cloud group for BOTH EC2 instances
+  group_by:
+    key: cloud
+
+- name: Create cloudvm0 group (alias) for first EC2 instance
+  group_by:
+    key: cloudvm0
+
+- name: Create cloudvm1 group (alias) for second EC2 instance
+  group_by:
+    key: cloudvm1
+
+- name: Add BOTH EC2 instances to cloud group
+# Reference: https://newbedev.com/getting-the-ip-address-attributes-of-the-aws-instance-created-using-ansible
+  add_host:
+    hostname: "{{ item.public_ip }}"
+    ansible_ssh_private_key_file: "{{ inventory_dir | dirname | dirname }}/.ssh/aws-keypair-2.pem"
+    # Cloud VMs collectively called cloud
+    groupname: cloud
+  with_items: "{{ ec2.instances }}"
+
+- name: "Add first EC2 instance {{ ec2.instances[0].public_ip }} to cloudvm0 group"
+# Reference: https://newbedev.com/getting-the-ip-address-attributes-of-the-aws-instance-created-using-ansible
+  add_host:
+    hostname: "{{ ec2.instances[0].public_ip }}"
+    ansible_ssh_private_key_file: "{{ inventory_dir | dirname | dirname }}/.ssh/aws-keypair-2.pem"
+    # Cloud VMs collectively called cloud
+    groupname: cloudvm0
+
+- name: "Add second EC2 instance {{ ec2.instances[1].public_ip }} to cloudvm1 group"
+# Reference: https://newbedev.com/getting-the-ip-address-attributes-of-the-aws-instance-created-using-ansible
+  add_host:
+    hostname: "{{ ec2.instances[1].public_ip }}"
+    ansible_ssh_private_key_file: "{{ inventory_dir | dirname | dirname }}/.ssh/aws-keypair-2.pem"
+    # Cloud VMs collectively called cloud
+    groupname: cloudvm1
+
+- name: Wait for SSH to come up # SSH needs to work for rest of playbook to continue
+  wait_for:
+    host: "{{ item.public_ip }}"
+    port: 22
+    state: started
+  with_items: "{{ ec2.instances }}"
