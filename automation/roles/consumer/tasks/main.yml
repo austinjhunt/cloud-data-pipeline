@@ -3,6 +3,6 @@
     chdir: /home/ubuntu/cs5287datapipeline/src
     # Create a Kafka Consumer. Use first EC2 instance as bootstrap server. 2nd as data sink.
     cmd:  "python3 driver.py -c -v -d -t stock-market-data  --bootstrap_server {{ hostvars['127.0.0.1'].ec2_1.instances[0].public_ip_address }} --data_sink_server {{ hostvars['127.0.0.1'].ec2_2.instances[0].public_ip_address }} > consumer.log"
-  # Don't wait
-  async: 120
+  async: 600 # allow 10 minutes
   poll: 0
+  register: consumer

@@ -100,12 +100,12 @@
     aws_access_key: "{{ aws_access_key_id.stdout }}"
     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
     filters:
-      "tag:app": 5287datapipeline
-      "tag:Name": cloudvm0
-    name: cloudvm0
+      "tag:app": datapipeline
+      "tag:Name": 5287cloudvm0
+    name: 5287cloudvm0
     tags:
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
-      app: 5287datapipeline
+      app: datapipeline
     key_name: aws-keypair-2
     instance_type: t2.medium
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
@@ -130,12 +130,12 @@
     aws_access_key: "{{ aws_access_key_id.stdout }}"
     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
     filters:
-      "tag:app": 5287datapipeline
-      "tag:Name": cloudvm1
-    name: cloudvm1
+      "tag:app": datapipeline
+      "tag:Name": 5287cloudvm1
+    name: 5287cloudvm1
     tags:
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
-      app: 5287datapipeline
+      app: datapipeline
     key_name: aws-keypair-2
     instance_type: t2.medium
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"

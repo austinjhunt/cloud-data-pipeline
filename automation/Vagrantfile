@@ -41,7 +41,7 @@ Vagrant.configure("2") do |config|
     vb.memory = "1024"
   end
 
-   #  Run Ansible from the Vagrant Host  #
+  #  Run Ansible from the Vagrant Host  #
   config.vm.provision "ansible_local" do |ansible|
       ansible.playbook = "/vagrant/automation/master.yml"
       ansible.verbose = true
