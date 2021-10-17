@@ -1,0 +1,3 @@
+BRIGHTSPACE REQUIRES FILE ATTACHMENT FOR SUBMISSION
+GitHub repository: https://github.com/austinjhunt/cs5287datapipeline
+Video: https://www.youtube.com/watch?v=XJ-yxZktSjk
