@@ -41,3 +41,8 @@ Programming Assignment 2 is focused on the automation of all steps taken in assi
 - [Documentation](assignments/assignment2/milestones/M1README.md)
 - [Video 1](https://youtu.be/xMSoP5IG0pU)
 - [Video 2](https://youtu.be/mAWtgLduiPc)
+
+##### Milestones 2 and 3 - Due 10/13/2021 and 10/20/2021
+- [Milestone 2 Documentation](assignments/assignment2/milestones/M2README.md)
+- [Milestone 3 Documentation](assignments/assignment2/milestones/M3README.md)
+- [Video](https://youtu.be/XJ-yxZktSjk)

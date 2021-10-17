@@ -1,81 +1,85 @@
 ---
-- hosts: localvm
-  # Ubuntu 20.04 and other versions of Debian Linux ship with Python 3 pre-installed. No need to install.
-  remote_user: vagrant
-  become: true
-  gather_facts: true
-  pre_tasks:
-    # set up the local VM with apt packages and python requirements before doing anything else
-    - name: Set up master playbook
-      import_tasks: setup-master.yml
-  roles:
-    # Orchestrate the creation of two cloud VMs
-    - cloud-orchestrator
-
-# Run general Cloud VM setup on both cloud VMs
-- hosts: cloud
-  become: yes
-  remote_user: ubuntu
-  gather_facts: yes
-  roles:
-    - cloudvm
-
-# Configure first VM to publicly advertise Zookeeper listener
-- hosts: cloudvm0
-  become: yes
-  remote_user: ubuntu
-  gather_facts: yes
-  roles:
-    - cloudvm0
-
-# Install couchDB and configure it as second Zookeeper Cluster member
-- hosts: cloudvm1
-  become: yes
-  remote_user: ubuntu
-  gather_facts: yes
-  roles:
-    - couchdb
-    - cloudvm1
-
-
-# Start Zookeeper & Kafka on both cloud VMs
-- hosts: cloud
-  become: yes
-  remote_user: ubuntu
-  gather_facts: yes
-  roles:
-    - zookeeper-kafka
-
-# Run Consumer on second cloud VM
-- hosts: cloudvm1
-  become: yes
-  remote_user: ubuntu
-  gather_facts: yes
-  roles:
-    - consumer
-
-# Local VM should run a Kafka Producer
-- hosts: localvm
-  # Ubuntu 20.04 and other versions of Debian Linux ship with Python 3 pre-installed. No need to install.
-  remote_user: vagrant
-  become: true
-  gather_facts: true
-  roles:
-    - producer
-    - wait-for-producer
-
-# # LocalVM should terminate the cloud infrastructure now
+# Local VM should orchestrate cloud infrastructure
 # - hosts: localvm
-#   # Ubuntu 20.04 and other versions of Debian Linux ship with Python 3 pre-installed. No need to install.
 #   remote_user: vagrant
 #   become: true
 #   gather_facts: true
 #   pre_tasks:
 #     # set up the local VM with apt packages and python requirements before doing anything else
-#     - name: Set up!
+#     - name: Set up master playbook
 #       import_tasks: setup-master.yml
 #   roles:
-#     - cloud-terminator
+#     # Orchestrate the creation of two cloud VMs
+#     # cloud, cloudvm0, and cloudvm1 are groups created dynamically by cloud-orchestrator role
+#     # they refer to both EC2 instances, the first EC2 instance, and the second EC2 instance respectively
+#     - cloud-orchestrator
+
+# # Run general Cloud VM setup on both cloud VMs (EC2 Instances)
+# - hosts: cloud
+#   become: yes
+#   remote_user: ubuntu
+#   gather_facts: yes
+#   roles:
+#     - cloudvm
+
+# # Configure first VM to publicly advertise Zookeeper listener
+# - hosts: cloudvm0
+#   become: yes
+#   remote_user: ubuntu
+#   gather_facts: yes
+#   roles:
+#     - cloudvm0
+
+# # Install couchDB on second EC2 instance
+# # and configure it as second Zookeeper Cluster member
+# - hosts: cloudvm1
+#   become: yes
+#   remote_user: ubuntu
+#   gather_facts: yes
+#   roles:
+#     - couchdb
+#     - cloudvm1
+
+
+# # Start Zookeeper & Kafka on both cloud VMs
+# - hosts: cloud
+#   become: yes
+#   remote_user: ubuntu
+#   gather_facts: yes
+#   roles:
+#     - zookeeper-kafka
+
+# # Run Consumer on second cloud VM
+# - hosts: cloudvm1
+#   become: yes
+#   remote_user: ubuntu
+#   gather_facts: yes
+#   roles:
+#     - consumer
+
+# # Local VM should run a Kafka Producer
+# - hosts: localvm
+#   # Ubuntu 20.04 and other versions of Debian Linux ship with Python 3 pre-installed. No need to install.
+#   remote_user: vagrant
+#   become: true
+#   gather_facts: true
+#   roles:
+#     - producer
+
+#     # Wait for producer to finish before moving on
+#     - wait-for-producer
+
+# LocalVM should clean up (stop) the cloud infrastructure now
+- hosts: localvm
+  remote_user: vagrant
+  become: true
+  gather_facts: true
+  pre_tasks:
+    # set up the local VM with apt packages and python requirements before doing anything else
+    - name: Set up!
+      import_tasks: setup-master.yml
+  roles:
+    - cloud-terminator
 
 
 ...
