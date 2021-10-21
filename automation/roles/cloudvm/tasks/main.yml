@@ -41,6 +41,8 @@
     path: /home/kafka/Downloads
     state: directory
 
+
+
 - name: Download Kafka binaries as kafka user
   become_user: kafka
   become: yes
@@ -75,6 +77,15 @@
   - "5984"
   - "9092"
 
+- name: Remove problematic log files if they already exist
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/zookeeper"
+    - "/tmp/kafka-logs"
+    - "/home/kafka/kafka/logs"
+
 - name: Copy zookeeper.service and kafka.service to server services
   become: yes
   copy:
@@ -91,8 +102,8 @@
     name: "{{ item }}"
     state: stopped
   loop:
-  - kafka
   - zookeeper
+  - kafka
 
 - name: Install Python requirements for project
   pip:
