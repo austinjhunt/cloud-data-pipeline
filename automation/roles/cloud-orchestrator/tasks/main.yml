@@ -147,6 +147,11 @@
         - 443
         cidr_ip: 0.0.0.0/0
         rule_desc: Secure Kubernetes API server (master nodes)
+      - proto: tcp
+        ports:
+        - 8080
+        cidr_ip: 0.0.0.0/0
+        rule_desc: Container Network Virtualization
     state: present
     region: us-east-1
 
