@@ -150,65 +150,68 @@
     state: present
     region: us-east-1
 
-# - name: Create EC2 Instance 1
-#   become: false
-#   environment: "{{ env_vars }}"
-#   community.aws.ec2_instance:
-#     aws_access_key: "{{ aws_access_key_id.stdout }}"
-#     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
-#     filters:
-#       "tag:app": datapipeline
-#       "tag:Name": 5287cloudvm0
-#     name: 5287cloudvm0
-#     tags:
-#       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
-#       app: datapipeline
-#     key_name: cs5287-assignment2-east1
-#     instance_type: t2.medium
-#     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
-#     network:
-#       assign_public_ip: yes
-#       delete_on_termination: yes
-#     region: us-east-1
-#     # Ubuntu 20.04 LTS AMI
-#     image_id: ami-09e67e426f25ce0d7
-#     state: running
-#     # Wait for the instances to reach their desired states before returning.
-#     # Does not wait for SSH, see the 'wait_for_connection' example for details.
-#     wait: yes
-#     # Security group to set up appropriate firewall rules
-#     security_group: kafka-couchdb-zookeeper-security
-#   register: ec2_1
+- name: Create EC2 Instance 1
+  become: false
+  environment: "{{ env_vars }}"
+  community.aws.ec2_instance:
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    # when I initially tried it, with the original settings from austin, it will identify some existing instance
+    # then it will try to use the existing instance, since I terminate these old instance (the one created in prior runs)
+    # it will throw out errors, not exactly sure how these filters will work, but have to be careful with these
+    filters:
+      "tag:app": datapipeline-a3
+      "tag:Name": 5287cloudvm0-a3
+    name: 5287cloudvm0-a3
+    tags:
+      # Add tags so you can start / stop by tags. Running twice should not create duplicates.
+      app: datapipeline-a3
+    key_name: cs5287-assignment2-east1
+    instance_type: t2.xlarge
+    vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
+    network:
+      assign_public_ip: yes
+      delete_on_termination: yes
+    region: us-east-1
+    # Ubuntu 20.04 LTS AMI
+    image_id: ami-09e67e426f25ce0d7
+    state: running
+    # Wait for the instances to reach their desired states before returning.
+    # Does not wait for SSH, see the 'wait_for_connection' example for details.
+    wait: yes
+    # Security group to set up appropriate firewall rules
+    security_group: kafka-couchdb-zookeeper-k8s-security
+  register: ec2_1
 
-# - name: Create EC2 Instance 2
-#   become: false
-#   environment: "{{ env_vars }}"
-#   community.aws.ec2_instance:
-#     aws_access_key: "{{ aws_access_key_id.stdout }}"
-#     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
-#     filters:
-#       "tag:app": datapipeline
-#       "tag:Name": 5287cloudvm1
-#     name: 5287cloudvm1
-#     tags:
-#       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
-#       app: datapipeline
-#     key_name: cs5287-assignment2-east1
-#     instance_type: t2.medium
-#     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
-#     network:
-#       assign_public_ip: yes
-#       delete_on_termination: yes
-#     region: us-east-1
-#     # Ubuntu 20.04 LTS AMI
-#     image_id: ami-09e67e426f25ce0d7
-#     state: running
-#     # Wait for the instances to reach their desired states before returning.
-#     # Does not wait for SSH, see the 'wait_for_connection' example for details.
-#     wait: yes
-#     # Security group to set up appropriate firewall rules
-#     security_group: kafka-couchdb-zookeeper-security
-#   register: ec2_2
+- name: Create EC2 Instance 2
+  become: false
+  environment: "{{ env_vars }}"
+  community.aws.ec2_instance:
+    aws_access_key: "{{ aws_access_key_id.stdout }}"
+    aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+    filters:
+      "tag:app": datapipeline-a3
+      "tag:Name": 5287cloudvm1-a3
+    name: 5287cloudvm1-a3
+    tags:
+      # Add tags so you can start / stop by tags. Running twice should not create duplicates.
+      app: datapipeline-a3
+    key_name: cs5287-assignment2-east1
+    instance_type: t2.xlarge
+    vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
+    network:
+      assign_public_ip: yes
+      delete_on_termination: yes
+    region: us-east-1
+    # Ubuntu 20.04 LTS AMI
+    image_id: ami-09e67e426f25ce0d7
+    state: running
+    # Wait for the instances to reach their desired states before returning.
+    # Does not wait for SSH, see the 'wait_for_connection' example for details.
+    wait: yes
+    # Security group to set up appropriate firewall rules
+    security_group: kafka-couchdb-zookeeper-k8s-security
+  register: ec2_2
 
 # - name: Wait for SSH to come up on VM 1 # SSH needs to work for rest of playbook to continue
 #   wait_for:
@@ -234,10 +237,10 @@
 #   with_items: "{{ ec2_1.instances }}"
 
 # - name: Add EC2 instance 2 to groups cloud and cloudvm1
-  # add_host:
-  #   name: "{{ item.public_ip_address }}"
-  #   ansible_ssh_private_key_file: "{{ playbook_dir }}/.ssh/cs5287-assignment2-east1.pem"
-  #   groups:
-  #     - cloud
-  #     - cloudvm1
-  # with_items: "{{ ec2_2.instances }}"
+#   add_host:
+#     name: "{{ item.public_ip_address }}"
+#     ansible_ssh_private_key_file: "{{ playbook_dir }}/.ssh/cs5287-assignment2-east1.pem"
+#     groups:
+#       - cloud
+#       - cloudvm1
+#   with_items: "{{ ec2_2.instances }}"
