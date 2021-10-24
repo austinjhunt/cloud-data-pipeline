@@ -1,0 +1,149 @@
+---
+# https://docs.docker.com/engine/install/ubuntu/
+- name: install packages before k8s installation
+  hosts: k8s_install_master
+  become: yes
+  remote_user: ubuntu
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - jq
+
+- name: Add K8S GPG key
+  shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+- name: set up the stable repository
+  shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+
+- name: Update and upgrade apt package index
+  apt:
+    upgrade: "yes"
+    update_cache: "yes"
+    cache_valid_time: 86400 # one day
+
+- name: install the latest version of k8s
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - kubeadm
+    - kubelet
+    - kubectl
+    - kubernetes-cni
+
+# - name: Modify Docker service configuration
+# # Looks like the latest version of K8s is assuming a “systemd”-based Cgroup driver used by Docker
+# # because we are using Ubuntu 20.04 now which is using “systemctl” for all the services.
+# # But default Docker installation is using “cgroupfs” which is causing problems for K8s to start.
+# # This will fix it (hopefully).
+#   lineinfile:
+#     path: /lib/systemd/system/docker.service
+#     regexp: 'ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock*'
+#     line: ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock --exec-opt native.cgroupdriver=systemd
+
+# - name: Reload daemon
+#   shell: systemctl daemon-reload
+
+- name: Copy docker daemon.json to change cgroup driver to systemd (without modifying service file)
+  become: yes
+  copy:
+    src: "{{ playbook_dir }}/files-dist/{{ item }}"
+    dest: "/etc/docker/{{ item }}"
+    owner: kafka
+  loop:
+    - daemon.json
+
+- name: Restart docker
+  shell: systemctl restart docker
+
+# Kubernetes will not work unless the swap is turned off; so this is crucial
+- name: Disable swap memory
+  shell: swapoff -a
+
+# Ansilbe add line to file https://linuxopsblog.wordpress.com/how-to-add-linessingle-multiple-to-a-file-in-ansible/
+# modifying my /etc/hosts file on both VMs to add aliases for my existing hostnames
+
+- name: getting hostname
+  shell: hostname
+  register: cloud_hostname
+  # the standard output for cloud_hostname is as folows:
+  # {'changed': True, 'stdout': 'ip-10-10-2-103', 'stderr': '', 'rc': 0, 'cmd': 'hostname',
+  # 'start': '2021-10-22 17:35:39.649426', 'end': '2021-10-22 17:35:39.652546', 'delta': '0:00:00.003120',
+  # 'msg': '', 'stdout_lines': ['ip-10-10-2-103'], 'stderr_lines': [], 'failed': False}
+  # I only want the ip-10-10-2-103 part and it can be accessed just like a normal dictionary
+
+- name: Add alias to /etc/hosts
+  lineinfile:
+    path: "/etc/hosts"
+    # I think it is the private ip instead of the public ip
+    line: "{{ public_ip }} {{ cloud_hostname['stdout_lines'][0] }} kubemaster kubeworker1"
+    insertafter: 127.0.0.1 localhost
+
+# Work in progress
+# From Professor
+# do not provide the --apiserver and --control-plane parameters.
+# Just provide the --node-name and --pod-network-cidr params.
+# Make sure to first do sudo kubeadm reset before reissuing the command.
+- name: Reset the cluster in case it's already created
+  shell: kubeadm reset
+
+- name: Creating the Cluster
+  shell: "kubeadm init --node-name kubemaster --pod-network-cidr=10.244.0.0/16"
+
+# Execute these commands that were output by the kubeadm init command
+# These are executed on the Master node as normal user (not sudo)
+# adding the become_user part to do as a normal user
+- name: kubeadm init command output 1
+  remote_user: ubuntu
+  become: no
+  shell: mkdir -p $HOME/.kube
+
+- name: kubeadm init command output 2
+  remote_user: ubuntu
+  become: no
+  shell: sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+- name: "Change ownership of ~/.kube/config to ubuntu:ubuntu"
+  become: yes
+  shell: chown $(id -u):$(id -g) $HOME/.kube/config
+
+- name: validate
+  shell: ls -l .kube/
+  become_user: ubuntu
+
+- name: Adding Container Network Virtualization
+  # In order for the cluster nodes and their pods to communicate with each other,
+  # we need to have a container network virtualization solution
+  # Here we will use Flannel
+  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  become_user: ubuntu
+
+- name: Checking the Status Using kubectl
+  shell: kubectl get pods --all-namespaces
+  become_user: ubuntu
+
+- name: Getting Info about our Cluster
+  shell: kubectl cluster-info
+  become_user: ubuntu
+
+- name: Checking Current Nodes
+  shell: kubectl get nodes
+  become_user: ubuntu
+
+- name: Allowing Master to Schedule a Pod via Tainting
+  shell: kubectl taint nodes kubemaster node-role.kubernetes.io/master:NoSchedule-
+  become_user: ubuntu
+
+- name: Check if Tainting is successful
+  shell: kubectl get nodes -o json | jq '.items[].spec.taints'
+  become_user: ubuntu
+
+- name: Save the token to be used by the workers for joining cluster
+  shell: kubeadm token create --print-join-command
+  become_user: ubuntu
+  register: k8sclusterjointoken
+...

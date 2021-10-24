@@ -1,0 +1,86 @@
+---
+
+# modifying my /etc/hosts file on both VMs to add aliases for my existing hostnames
+- name: Register hostname as variable
+  shell: hostname -I | cut -d' ' -f1
+  register: private_ip
+
+# Work in progress
+# From Professor
+# do not provide the --apiserver and --control-plane parameters.
+# Just provide the --node-name and --pod-network-cidr params.
+# Make sure to first do sudo kubeadm reset before reissuing the command.
+- name: Reset the cluster in case it's already created
+  shell: kubeadm reset -f
+
+- name: Restart docker and kubelet services
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - docker
+    - kubelet
+
+- name: Creating the Cluster with kubeadm init
+  shell: "kubeadm init --node-name kubemaster --pod-network-cidr=10.244.0.0/16 "
+
+# Execute these commands that were output by the kubeadm init command
+# These are executed on the Master node as normal user (not sudo)
+# adding the become_user part to do as a normal user
+- name: "Creating /home/ubuntu/.kube directory"
+  remote_user: ubuntu
+  become: no
+  shell: mkdir -p /home/ubuntu/.kube
+
+- name: "Copying admin configuration to local /home/ubuntu/.kube/config"
+  become: yes
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    remote_src: yes
+
+- name: "Change ownership of /home/ubuntu/.kube/config to ubuntu:ubuntu"
+  become: yes
+  file:
+    path: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+
+- name: Adding Container Network Virtualization
+  # In order for the cluster nodes and their pods to communicate with each other,
+  # we need to have a container network virtualization solution
+  # Here we will use Flannel
+  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  become_user: ubuntu
+
+- name: Checking the Status Using kubectl
+  shell: kubectl get pods --all-namespaces
+  become_user: ubuntu
+
+- name: Getting info about our Cluster
+  shell: kubectl cluster-info
+  become_user: ubuntu
+
+- name: Checking Current Nodes
+  shell: kubectl get nodes
+  become_user: ubuntu
+
+- name: Allowing Master to Schedule a Pod via Tainting (i.e. allow master to function as worker)
+  shell: kubectl taint nodes kubemaster node-role.kubernetes.io/master:NoSchedule-
+  become_user: ubuntu
+
+- name: Check if Tainting is successful
+  shell: kubectl get nodes -o json | jq '.items[].spec.taints'
+  become_user: ubuntu
+
+- name: Save the token to be used by the workers for joining cluster
+  shell: kubeadm token create --print-join-command
+  become_user: ubuntu
+  register: clusterjoincmd
+
+- name: Debugging
+  debug:
+    var: clusterjoincmd.stdout
+
+
+...

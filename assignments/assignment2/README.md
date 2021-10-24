@@ -1,0 +1,2 @@
+## Programming Assignment 2
+Programming assignment 2 for Vanderbilt University's CS 5287: Principles of Cloud Computing builds on [Programming Assignment 1](../../assignment1/README.md), and is focused on automating the manual steps from Programming Assignment 1 using tools like Vagrant and Ansible (for cloud infrastructure orchestration, configurations, starting and stopping services).

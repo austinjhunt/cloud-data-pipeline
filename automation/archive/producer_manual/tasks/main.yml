@@ -1,0 +1,8 @@
+- name: Run a Kafka Producer
+  shell:
+    chdir: /vagrant/src
+    # Create a Kafka producer. Use first EC2 instance as bootstrap server. 2nd as data sink.
+    cmd: "python3 driver.py -v -p -pa DingVagrantAnsibleManual -n 20 -t stock-market-data -ss WMT --bootstrap_server {{ bootstrap_server }} --data_sink_server {{ data_sink_server }} > producer.log"
+  async: 600 # allow 10 minutes
+  poll: 0
+  register: producer

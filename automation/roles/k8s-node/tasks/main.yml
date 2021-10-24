@@ -1,0 +1,69 @@
+---
+# https://docs.docker.com/engine/install/ubuntu/
+- name: install packages before k8s installation
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - jq
+
+- name: Add K8S GPG key
+  shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+- name: set up the stable repository
+  shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+
+- name: Update and upgrade apt package index
+  apt:
+    upgrade: "yes"
+    update_cache: "yes"
+
+- name: install the latest version of k8s
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - kubeadm
+    - kubelet
+    - kubectl
+    - kubernetes-cni
+
+# Kubernetes will not work unless the swap is turned off; so this is crucial
+- name: Disable swap memory
+  shell: swapoff -a
+
+- name: Copy docker daemon.json to change cgroup driver to systemd (without modifying service file)
+  copy:
+    src: "{{ playbook_dir }}/files-dist/{{ item }}"
+    dest: "/etc/docker/{{ item }}"
+  loop:
+    - daemon.json
+
+- name: systemctl daemon-reload after modifying docker daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Add kubemaster alias to /etc/hosts for Cloud VM 1's private IP
+  lineinfile:
+    path: "/etc/hosts"
+    line: "{{ hostvars['127.0.0.1'].ec2_1.instances[0].private_ip_address }} kubemaster"
+    insertafter: 127.0.0.1 localhost
+
+- name: Add kubeworker alias to /etc/hosts for Cloud VM 2's private IP
+  lineinfile:
+    path: "/etc/hosts"
+    line: "{{ hostvars['127.0.0.1'].ec2_2.instances[0].private_ip_address }} kubeworker"
+    insertafter: 127.0.0.1 localhost
+
+- name: Enable and start the docker and kubelet services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - docker
+    - kubelet
+...

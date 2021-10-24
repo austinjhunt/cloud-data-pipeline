@@ -1,0 +1,2 @@
+## Programming Assignment 3
+Programming assignment 3 for Vanderbilt University's CS 5287: Principles of Cloud Computing builds on [Programming Assignment 2](../assignment2/README.md), and is focused on containerizing the components of the data pipeline rather than having them run directly as processes on the VMs in the architecture. Here, we'll use Docker to containerize each individual service, and we'll use Kubernetes for the orchestration of those containers.
