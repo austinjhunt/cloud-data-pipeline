@@ -1,0 +1,111 @@
+# Tasks to run on all cloud VMs
+- name: Update and upgrade apt package index
+  apt:
+    upgrade: "yes"
+    update_cache: "yes"
+    cache_valid_time: 86400 # one day
+
+- name: install packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - acl
+    - python3-pip
+
+- name: Clone the GitHub repository
+  git:
+    repo: https://github.com/austinjhunt/cs5287datapipeline.git
+    dest: /home/ubuntu/cs5287datapipeline
+    clone: yes
+    update: yes
+    force: yes
+
+- name: Install OpenJDK JRE
+  apt:
+    name: default-jre
+    state: present
+
+- name: Create kafka user in sudo group
+  become: yes
+  user:
+    name: kafka
+    groups:
+      - sudo
+    append: yes
+
+- name: Create /home/kafka/Downloads as kafka user
+  become_user: kafka
+  become: yes
+  file:
+    path: /home/kafka/Downloads
+    state: directory
+
+- name: Download Kafka binaries as kafka user
+  become_user: kafka
+  become: yes
+  get_url:
+    url: https://downloads.apache.org/kafka/2.6.2/kafka_2.13-2.6.2.tgz
+    dest: /home/kafka/Downloads/kafka.tgz
+
+- name: Create /home/kafka/kafka as kafka user
+  become_user: kafka
+  become: yes
+  file:
+    path: /home/kafka/kafka
+    state: directory
+
+- name: Extract kafka archive using tar command as kafka user
+  become_user: kafka
+  become: yes
+  unarchive:
+    src: /home/kafka/Downloads/kafka.tgz
+    dest: /home/kafka/kafka/
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+
+- name: Create firewall rules for Zookeeper, Kafka, and CouchDB
+  become: yes
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+  loop:
+  - "2181"
+  - "4369"
+  - "5984"
+  - "9092"
+
+- name: Remove problematic log files if they already exist
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/zookeeper"
+    - "/tmp/kafka-logs"
+    - "/home/kafka/kafka/logs"
+
+- name: Copy zookeeper.service and kafka.service to server services
+  become: yes
+  copy:
+    src: "{{ playbook_dir }}/files-dist/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: kafka
+  loop:
+  - "zookeeper.service"
+  - "kafka.service"
+
+- name: Stop Kafka and Zookeeper
+  become: yes
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop:
+  - zookeeper
+  - kafka
+
+- name: Install Python requirements for project
+  pip:
+    chdir:  /home/ubuntu/cs5287datapipeline
+    requirements: /home/ubuntu/cs5287datapipeline/requirements.txt
+    state: present
+

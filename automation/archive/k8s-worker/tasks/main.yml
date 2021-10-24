@@ -1,0 +1,4 @@
+---
+- name: Join worker to k8s cluster with join token
+  shell: "kubeadm join 10.10.2.103:6443 --token d50e7h.0s2b8rq4rar5tc4v --discovery-token-ca-cert-hash sha256:824f2b11e8d6b1d03fbc53dbfb829da398d19a784ac2f3c6b7c5d35fa10beb9a"
+...

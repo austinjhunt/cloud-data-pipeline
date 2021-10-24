@@ -1,0 +1,62 @@
+---
+# https://docs.docker.com/engine/install/ubuntu/
+- name: install packages before k8s installation
+  hosts: k8s_install_master
+  become: yes
+  remote_user: ubuntu
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - jq
+
+- name: Add K8S GPG key
+  shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+- name: set up the stable repository
+  shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+
+- name: Update and upgrade apt package index
+  apt:
+    upgrade: "yes"
+    update_cache: "yes"
+    cache_valid_time: 86400 # one day
+
+- name: install the latest version of k8s
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - kubeadm
+    - kubelet
+    - kubectl
+    - kubernetes-cni
+
+# - name: Modify Docker service configuration
+# # Looks like the latest version of K8s is assuming a “systemd”-based Cgroup driver used by Docker
+# # because we are using Ubuntu 20.04 now which is using “systemctl” for all the services.
+# # But default Docker installation is using “cgroupfs” which is causing problems for K8s to start.
+# # This will fix it (hopefully).
+#   lineinfile:
+#     path: /lib/systemd/system/docker.service
+#     regexp: 'ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock*'
+#     line: ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock --exec-opt native.cgroupdriver=systemd
+
+# - name: Reload daemon
+#   shell: systemctl daemon-reload
+
+- name: Copy docker daemon.json to change cgroup driver to systemd (without modifying service file)
+  become: yes
+  copy:
+    src: "{{ playbook_dir }}/files-dist/{{ item }}"
+    dest: "/etc/docker/{{ item }}"
+    owner: kafka
+  loop:
+    - daemon.json
+
+- name: Restart docker
+  shell: systemctl restart docker
+...

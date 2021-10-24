@@ -1,0 +1,16 @@
+---
+- name: Reset the cluster in case it's already created
+  shell: kubeadm reset -f
+
+- name: Restart docker and kubelet services
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - docker
+    - kubelet
+
+- name: Join worker to k8s cluster with join token
+  command: "{{ hostvars[item]['clusterjoincmd']['stdout'] }} --node-name kubeworker"
+  with_items: "{{ groups['k8smaster'] }}"
+...
