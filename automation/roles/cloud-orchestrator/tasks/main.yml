@@ -152,6 +152,11 @@
         - 8080
         cidr_ip: 0.0.0.0/0
         rule_desc: Container Network Virtualization
+      - proto: tcp
+        ports:
+        - 30984
+        cidr_ip: 0.0.0.0/0
+        rule_desc: NodePort for couchdb Kubernetes Service for public IP GUI access
     state: present
     region: us-east-1
 

@@ -1,0 +1,228 @@
+# Service objects for exposing the deployments corresponding to the selectors
+---
+# ClusterIP service for accessing zookeeper from within cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-service
+spec:
+  selector:
+    app: zookeeper
+  ports:
+    # Client connections to zookeeper
+    - protocol: TCP
+      port: 2181
+      targetPort: 2181
+      name: client
+---
+# Headless clusterIP service for zookeeper
+# Great explanation for this decision can be found here: https://stackoverflow.com/questions/52707840/what-is-a-headless-service-what-does-it-do-accomplish-and-what-are-some-legiti
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-headless-service
+spec:
+  selector:
+    app: zookeeper
+  clusterIP: None # headless service
+  ports:
+    # used by ZK peers to talk to each other
+    - protocol: TCP
+      port: 2888
+      targetPort: 2888
+      name: server
+    # used by ZK peers to talk to each other
+    - protocol: TCP
+      port: 3888
+      targetPort: 3888
+      name: leader-election
+---
+# NodePort service for accessing couchdb from public Node IP : 30984
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-service
+spec:
+  selector:
+    app: couchdb
+  type: NodePort
+  ports:
+    # Standard clustered port for all HTTP API requests (and web GUI)
+    - protocol: TCP
+      port: 5984
+      targetPort: 5984
+      nodePort: 30984
+      name: http
+---
+# Headless service for couchdb reachable from within cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-service-headless
+spec:
+  selector:
+    app: couchdb
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    # Standard clustered port for all HTTP API requests (and web GUI)
+    - protocol: TCP
+      port: 5984
+      targetPort: 5984
+      name: http
+    # Erlang port mapper daemon (epmd)
+    - protocol: TCP
+      port: 4369
+      targetPort: 4369
+      name: epmd
+---
+# ClusterIP service to access Kafka from within cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+spec:
+  type: ClusterIP
+  selector:
+    app: kafka
+  ports:
+    # Client connections to Kafka broker cluster
+    - protocol: TCP
+      port: 9092
+      targetPort: 9092
+      name: client
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-deployment
+  labels:
+    app: zookeeper
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+      # Zookeeper container
+      - name: zookeeper
+        image: bitnami/zookeeper
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: server
+        - containerPort: 3888
+          name: leader-election
+        env:
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "0.5"
+          limits:
+            memory: "1.5Gi"
+            cpu: "0.6"
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-deployment
+  labels:
+    app: kafka
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      # Kafka Broker 0
+      - name: broker0
+        image: bitnami/kafka
+        ports:
+        - containerPort: 9092
+          name: client
+        env:
+        - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+          value: "zookeeper:2181"
+        - name: KAFKA_BROKER_ID
+          value: "0"
+        - name: ALLOW_PLAINTEXT_LISTENER
+          value: "yes"
+        resources:
+          # Kafka Hardware Requirements: https://knowledgecenter.gcora.genpact.com/help/kafka-cluster-minimum-requirements
+          requests:
+            memory: "64Mi"
+            cpu: "250m" # 250 milliCPUs
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+      # Kafka Broker 1
+      - name: broker1
+        image: bitnami/kafka
+        ports:
+        - containerPort: 9092
+          name: client
+        env:
+        - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+          value: "zookeeper:2181"
+        - name: KAFKA_BROKER_ID
+          value: "1"
+        - name: ALLOW_PLAINTEXT_LISTENER
+          value: "yes"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m" # 250 milliCPUs
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: couchdb-deployment
+  labels:
+    app: couchdb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: couchdb
+  template:
+    metadata:
+      labels:
+        app: couchdb
+    spec:
+      containers:
+      - name: couchdb
+        image: couchdb
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m" # 250 milliCPUs
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        env:
+        - name: COUCHDB_USER
+          value: admin
+        - name: COUCHDB_PASSWORD
+          value: "789456123"
+        - name: NODENAME
+          value: couchie-that-hurts
