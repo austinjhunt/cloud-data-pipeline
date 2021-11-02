@@ -58,6 +58,9 @@
     line: "{{ hostvars['127.0.0.1'].ec2_2.instances[0].private_ip_address }} kubeworker"
     insertafter: 127.0.0.1 localhost
 
+# Fix DNS on all nodes
+# https://simonfredsted.com/1680
+
 - name: Enable and start the docker and kubelet services
   service:
     name: "{{ item }}"

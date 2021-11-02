@@ -12,6 +12,7 @@
   loop:
     - acl
     - python3-pip
+    - jq
 
 - name: Create firewall rules for Zookeeper, Kafka, and CouchDB
   become: yes
