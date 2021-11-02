@@ -15,7 +15,9 @@ class Driver:
         self.couchdb_user = None
         self.couchdb_password = None
         self.cloud_platform = cloud_platform
+        ## PUBLIC_IP_ADDRESS:PORT_NUMBER
         self.bootstrap_server = bootstrap_server
+        ## PUBLIC_IP_ADDRESS:PORT_NUMBER
         self.data_sink_server = data_sink_server
         self.configure()
 
@@ -100,12 +102,11 @@ class Driver:
                 self.debug(f"Consumer host: {self.consumer_host}")
                 self.debug(f"Sink Host: {self.data_sink_server}")
 
-                # couch db admin name and password
-                couchdb = config['couchdb']
-                self.couchdb_server = couchdb['server']
-                self.couchdb_user = couchdb['user']
-                self.couchdb_password = couchdb['password']
-                self.couchdb_database = couchdb['database']
+                # Use environment
+                self.couchdb_server = os.environ.get('COUCHDB_SERVER', 'localhost')
+                self.couchdb_user = os.environ.get('COUCHDB_USER', 'admin')
+                self.couchdb_password = os.environ.get('COUCHDB_PASSWORD', '123456')
+                self.couchdb_database = os.environ.get('COUCHDB_DATABASE', 'couchie')
 
             except Exception as e:
                 self.error(e)
@@ -118,12 +119,12 @@ parser.add_argument('--cloud_platform', default='', choices=['chameleon','aws','
 
 # Pass these two if not using --cloud_platform
 parser.add_argument('-b','--bootstrap_server', type=str, default='', help=(
-'provide the public IP address of the Kafka bootstrap server '
+'provide the PUBLIC_IP:PORT_NUMBER of the Kafka bootstrap server '
 '(alternative to --cloud_platform, which pulls bootstrap '
-'address from  static config file)')
+'address from static config file)')
 )
 parser.add_argument('-sink','--data_sink_server', type=str, default='', help=(
-'provide the public IP address of the server on which the data sink (CouchDB) will run '
+'provide the PUBLIC_IP:PORT_NUMBER of the server on which the data sink (CouchDB) will run '
 '(alternative to --cloud_platform, which pulls address from static config file)')
 )
 

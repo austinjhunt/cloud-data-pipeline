@@ -32,11 +32,11 @@ class Producer:
         self.sleep_interval = sleep_interval
         self.setup_logging(verbose=verbose)
         self.info(
-            f'Creating producer with bootstrap_server={bootstrap_server}:9092, '
+            f'Creating producer with bootstrap_server={bootstrap_server}, '
             f'producer_alias={producer_alias},sleep_interval={sleep_interval}, '
             f'stock_symbol={stock_symbol}')
         self.kafka_producer = KafkaProducer(
-            bootstrap_servers=f'{bootstrap_server}:9092',
+            bootstrap_servers=f'{bootstrap_server}', # IP_ADDRESS:PORT
             api_version=(0,10,1),
             request_timeout_ms=5000,
             # wait for leader to write to log; this controls the durability of records that are sent.

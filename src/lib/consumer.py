@@ -9,10 +9,9 @@ class Consumer:
     ):
         self.setup_logging(verbose=verbose)
         self.kafka_consumer = KafkaConsumer(
-            bootstrap_servers=f'{bootstrap_server}:9092'
+            bootstrap_servers=f'{bootstrap_server}' # PUBLIC_IP:PORT
         )
-        self.info(
-            f'Creating consumer with bootstrap_server={bootstrap_server}:9092, topics={topics}')
+        self.info(f'Creating consumer with bootstrap_server={bootstrap_server}, topics={topics}')
         self.kafka_consumer.subscribe(topics=topics)
 
         # settings for couchdb
