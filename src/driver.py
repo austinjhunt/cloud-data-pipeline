@@ -98,7 +98,6 @@ parser.add_argument('-b','--bootstrap_server', type=str, default='', help=(
 'address from static config file)')
 )
 
-
 parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
 parser.add_argument('-t', '--topic',
     help='topic to produce (if running producer with -p) or consume (if running consumer with -c)',
@@ -113,6 +112,7 @@ parser.add_argument('-ss', '--stock_symbol', default='AMZN', help='stock symbol 
 
 parser.add_argument('-c', '--run_consumer', help='whether to run consumer', action='store_true')
 parser.add_argument('-d', '--dump', help='whether consumer should dump data/save to couchdb, only run with -c', action='store_true')
+
 
 
 args = parser.parse_args()
@@ -131,6 +131,12 @@ elif args.bootstrap_server != '':
         verbose=args.verbose,
         bootstrap_server=args.bootstrap_server
         )
+
+import sys
+# Print the full command that was used to invoke driver:
+driver.debug(
+    f'Command used: {" ".join(sys.argv[:])}'
+)
 
 if args.run_producer:
     driver.run_producer(
