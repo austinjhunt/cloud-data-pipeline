@@ -70,6 +70,21 @@
         - 22
         cidr_ip: 0.0.0.0/0
         rule_desc: ssh
+      - proto: udp
+        ports:
+        - 53
+        cidr_ip: 0.0.0.0/0
+        rule_desc: DNS port for kubernetes (UDP)
+      - proto: tcp
+        ports:
+        - 53
+        cidr_ip: 0.0.0.0/0
+        rule_desc: DNS port for kubernetes (TCP)
+      - proto: tcp
+        ports:
+        - 9153
+        cidr_ip: 0.0.0.0/0
+        rule_desc: metrics CoreDNS port for kubernetes
       - proto: tcp
         ports:
         - 2181
@@ -157,6 +172,11 @@
         - 30984
         cidr_ip: 0.0.0.0/0
         rule_desc: NodePort for couchdb Kubernetes Service for public IP GUI access
+      - proto: tcp
+        ports:
+        - 30985
+        cidr_ip: 0.0.0.0/0
+        rule_desc: NodePort for Kafka Kubernetes Service for public bootstrap access
     state: present
     region: us-east-1
 
@@ -176,7 +196,7 @@
     tags:
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
       app: datapipeline-a3
-    key_name: aws-keypair-2
+    key_name: aws-keypair3
     instance_type: t2.medium
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
     network:
@@ -206,7 +226,7 @@
     tags:
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
       app: datapipeline-a3
-    key_name: aws-keypair-2
+    key_name: aws-keypair3
     instance_type: t2.medium
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
     network:
@@ -240,7 +260,7 @@
 - name: Add EC2 instance 1 to groups cloud and k8smaster
   add_host:
     name: "{{ item.public_ip_address }}"
-    ansible_ssh_private_key_file: "{{ playbook_dir }}/.ssh/aws-keypair-2.pem"
+    ansible_ssh_private_key_file: "{{ playbook_dir }}/.ssh/aws-keypair3.pem"
     groups:
       - cloud
       - k8smaster
@@ -249,7 +269,7 @@
 - name: Add EC2 instance 2 to groups cloud and k8sworker
   add_host:
     name: "{{ item.public_ip_address }}"
-    ansible_ssh_private_key_file: "{{ playbook_dir }}/.ssh/aws-keypair-2.pem"
+    ansible_ssh_private_key_file: "{{ playbook_dir }}/.ssh/aws-keypair3.pem"
     groups:
       - cloud
       - k8sworker

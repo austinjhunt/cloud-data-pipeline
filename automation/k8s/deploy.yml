@@ -1,82 +1,3 @@
-# ZOOKEEPER SERVICES - DEPEND ON zookeeper-deployment
-# Service objects for exposing the deployments corresponding to the selectors
----
-# If you are inside of the cluster, access a service with cluster DNS name of: service_name.service_namespace.svc.cluster.local
-# ClusterIP service for accessing zookeeper from within cluster
-apiVersion: v1
-kind: Service
-metadata:
-  name: zookeeper-service
-spec:
-  selector:
-    app: zookeeper
-  ports:
-    # Client connections to zookeeper
-    - protocol: TCP
-      port: 2181
-      targetPort: 2181
-      name: client
----
-# Headless clusterIP service for zookeeper
-# Great explanation for this decision can be found here: https://stackoverflow.com/questions/52707840/what-is-a-headless-service-what-does-it-do-accomplish-and-what-are-some-legiti
-apiVersion: v1
-kind: Service
-metadata:
-  name: zookeeper-headless-service
-spec:
-  selector:
-    app: zookeeper
-  clusterIP: None # headless service
-  ports:
-    # used by ZK peers to talk to each other
-    - protocol: TCP
-      port: 2888
-      targetPort: 2888
-      name: server
-    # used by ZK peers to talk to each other
-    - protocol: TCP
-      port: 3888
-      targetPort: 3888
-      name: leader-election
-
-# END ZOOKEEPER SERVICES - DEPEND ON zookeeper-deployment
-
----
-### Expose kafka cluster internally for brokers to self-reference and
-### for consumer to use for bootstrap
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka-service-internal
-spec:
-  type: ClusterIP
-  selector:
-    app: kafka-deployment
-  ports:
-    # Client connections to Kafka broker cluster
-    - protocol: TCP
-      port: 9092
-      targetPort: 9092
-      name: client
----
-# Expose Kafka cluster externally for producers to connect
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka-service-external
-spec:
-  type: NodePort
-  selector:
-    app: kafka-deployment
-  ports:
-    # External client connections to Kafka bootstrap node
-    - name: bootstrap
-      protocol: TCP
-      port: 9092
-      targetPort: 9092
-      nodePort: 30985
-
-### END KAFKA SERVICES - DEPEND ON KAFKA BROKER DEPLOYMENTS ###
 
 ---
 apiVersion: apps/v1
@@ -114,30 +35,29 @@ spec:
             memory: "1Gi"
             cpu: "0.5"
           limits:
-            memory: "1.2Gi"
+            memory: "1Gi"
             cpu: "0.6"
-
-
 ---
-
 ### KAFKA BROKER DEPLOYMENTS DEPEND ON zookeeper-service ###
 # Deployment for broker 0 - BOOTSTRAP SERVER in Kafka Cluster, so we can
 # expose a BOOTSTRAP SERVER SERVICE that consumer and producer can connect to
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka-deployment
+  name: kafka-b0-deployment
   labels:
-    app: kafka-deployment
+    app: kafka
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: kafka
+      brokerId: "0"
   template:
     metadata:
       labels:
         app: kafka
+        brokerId: "0"
     spec:
       # Wait for zookeeper to start up first
       initContainers:
@@ -150,13 +70,25 @@ spec:
         image: bitnami/kafka
         ports:
         - containerPort: 9092
-          name: client
+          name: internal
+        - containerPort: 9093
+          name: external
+        - containerPort: 9094
+          name: interbroker
         env:
-        # - name: KAFKA_CFG_LISTENERS
-        #   value: "PLAINTEXT://broker0:9092"
-        # - name: KAFKA_CFG_ADVERTISED_LISTENERS
-        #   value: "PLAINTEXT://broker0:9092"
-        - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "INTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,EXTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,INTERBROKER_LISTENER:PLAINTEXT"
+        - name: KAFKA_LISTENERS
+          value: "INTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9092,EXTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9093,INTERBROKER_LISTENER://0.0.0.0:9094"
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
+          value: "INTERBROKER_LISTENER"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "INTERNAL_BOOTSTRAP_SERVICE://$(MY_POD_IP):9092,INTERBROKER_LISTENER://$(MY_POD_IP):9094,EXTERNAL_BOOTSTRAP_SERVICE://50.16.31.149:30985"
+        - name: KAFKA_ZOOKEEPER_CONNECT
           value: "zookeeper-service:2181"
         - name: KAFKA_BROKER_ID
           value: "0"
@@ -169,18 +101,56 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "0.6"
-      #  Broker 1
+---
+# Deployment for broker 1 - BOOTSTRAP SERVER in Kafka Cluster, so we can
+# expose a BOOTSTRAP SERVER SERVICE that consumer and producer can connect to
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-b1-deployment
+  labels:
+    app: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+      brokerId: "1"
+  template:
+    metadata:
+      labels:
+        app: kafka
+        brokerId: "1"
+    spec:
+      # Wait for zookeeper to start up first
+      initContainers:
+      - name: wait
+        image: alpine
+        command: ["/bin/sh", "-c", "for i in $(seq 1 300); do nc -zvw1 zookeeper-service 2181 && exit 0 || sleep 3; done; exit 1"]
+      containers:
       - name: broker1
         image: bitnami/kafka
         ports:
+        - containerPort: 9092
+          name: internal
         - containerPort: 9093
-          name: client
+          name: external
+        - containerPort: 9094
+          name: interbroker
         env:
-        - name: KAFKA_CFG_LISTENERS
-          value: "PLAINTEXT://:9093"
-        - name: KAFKA_CFG_ADVERTISED_LISTENERS
-          value: "PLAINTEXT://:9093"
-        - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "INTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,EXTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,INTERBROKER_LISTENER:PLAINTEXT"
+        - name: KAFKA_LISTENERS
+          value: "INTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9092,EXTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9093,INTERBROKER_LISTENER://0.0.0.0:9094"
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
+          value: "INTERBROKER_LISTENER"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "INTERNAL_BOOTSTRAP_SERVICE://:9092,EXTERNAL_BOOTSTRAP_SERVICE://:9093,INTERBROKER_LISTENER://$(MY_POD_IP):9094"
+        - name: KAFKA_ZOOKEEPER_CONNECT
           value: "zookeeper-service:2181"
         - name: KAFKA_BROKER_ID
           value: "1"
@@ -193,6 +163,7 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "0.6"
+
 ### END KAFKA BROKER DEPLOYMENTS DEPEND ON zookeeper-service ###
 
 ---
@@ -234,46 +205,6 @@ spec:
             cpu: "0.7"
 ### END COUCHDB DEPLOYMENT ###
 ---
-### COUCHDB SERVICES FOR INTERNAL AND EXTERNAL ACCESS ###
-# NodePort service for accessing couchdb from public Node IP : 30984
-apiVersion: v1
-kind: Service
-metadata:
-  name: couchdb-service-external
-spec:
-  selector:
-    app: couchdb
-  type: NodePort
-  ports:
-    # Standard clustered port for all HTTP API requests (and web GUI)
-    - protocol: TCP
-      port: 5984
-      targetPort: 5984
-      nodePort: 30984
-      name: http
----
-# Internal service for couchdb reachable from within cluster
-apiVersion: v1
-kind: Service
-metadata:
-  name: couchdb-service-internal
-spec:
-  selector:
-    app: couchdb
-  type: ClusterIP
-  ports:
-    # Standard clustered port for all HTTP API requests (and web GUI)
-    - protocol: TCP
-      port: 5984
-      targetPort: 5984
-      name: http
-    # Erlang port mapper daemon (epmd)
-    - protocol: TCP
-      port: 4369
-      targetPort: 4369
-      name: epmd
-### END COUCHDB SERVICES FOR INTERNAL AND EXTERNAL ACCESS ###
----
 ### CONSUMER DEPLOYMENT; DOES NOT REQUIRE PUBLICLY
 ### EXPOSING ANY SPECIFIC PORT SO NO SERVICE ASSIGNED ###
 # Consumer with custom consumer Docker image
@@ -313,7 +244,7 @@ spec:
         - name: COUCHDB_USER
           value: "admin"
         - name: COUCHDB_PASSWORD
-          value: "123456"
+          value: "789456123"
         - name: COUCHDB_DATABASE
           value: "cs5287"
         resources:

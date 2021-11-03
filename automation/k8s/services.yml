@@ -1,0 +1,121 @@
+# ZOOKEEPER SERVICES - DEPEND ON zookeeper-deployment
+# Service objects for exposing the deployments corresponding to the selectors
+---
+# If you are inside of the cluster, access a service with cluster DNS name of: service_name.service_namespace.svc.cluster.local
+# ClusterIP service for accessing zookeeper from within cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-service
+spec:
+  selector:
+    app: zookeeper
+  ports:
+    # Client connections to zookeeper
+    - protocol: TCP
+      port: 2181
+      targetPort: 2181
+      name: client
+---
+# Headless clusterIP service for zookeeper
+# Great explanation for this decision can be found here: https://stackoverflow.com/questions/52707840/what-is-a-headless-service-what-does-it-do-accomplish-and-what-are-some-legiti
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-headless-service
+spec:
+  selector:
+    app: zookeeper
+  clusterIP: None # headless service
+  ports:
+    # used by ZK peers to talk to each other
+    - protocol: TCP
+      port: 2888
+      targetPort: 2888
+      name: server
+    # used by ZK peers to talk to each other
+    - protocol: TCP
+      port: 3888
+      targetPort: 3888
+      name: leader-election
+
+# END ZOOKEEPER SERVICES - DEPEND ON zookeeper-deployment
+
+---
+### Expose kafka cluster internally for brokers to self-reference and
+### for consumer to use for bootstrap
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service-internal
+spec:
+  type: ClusterIP
+  selector:
+    app: kafka
+  ports:
+    - protocol: TCP
+      port: 9092
+      targetPort: 9092
+      name: broker0
+---
+# Expose Kafka cluster externally for producers to connect
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service-external
+spec:
+  type: NodePort
+  selector:
+    app: kafka
+    brokerId: "0"
+  ports:
+    # External client connections to Kafka bootstrap node
+    - name: bootstrap
+      protocol: TCP
+      port: 9093
+      targetPort: 9093
+      nodePort: 30985
+
+### END KAFKA SERVICES - DEPEND ON KAFKA BROKER DEPLOYMENTS ###
+
+---
+### COUCHDB SERVICES FOR INTERNAL AND EXTERNAL ACCESS ###
+# NodePort service for accessing couchdb from public Node IP : 30984
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-service-external
+spec:
+  selector:
+    app: couchdb
+  type: NodePort
+  ports:
+    # Standard clustered port for all HTTP API requests (and web GUI)
+    - protocol: TCP
+      port: 5984
+      targetPort: 5984
+      nodePort: 30984
+      name: http
+---
+# Internal service for couchdb reachable from within cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-service-internal
+spec:
+  selector:
+    app: couchdb
+  type: ClusterIP
+  ports:
+    # Standard clustered port for all HTTP API requests (and web GUI)
+    - protocol: TCP
+      port: 5984
+      targetPort: 5984
+      name: http
+    # Erlang port mapper daemon (epmd)
+    - protocol: TCP
+      port: 4369
+      targetPort: 4369
+      name: epmd
+### END COUCHDB SERVICES FOR INTERNAL AND EXTERNAL ACCESS ###
+---
