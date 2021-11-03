@@ -82,5 +82,4 @@
   debug:
     var: clusterjoincmd.stdout
 
-
 ...

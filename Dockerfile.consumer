@@ -5,6 +5,10 @@ RUN apt update && \
     cd /usr/local/bin && \
     ln -s /usr/bin/python3 python && \
     pip install --upgrade pip
+# Install Python requirements
+ADD requirements.txt /consumer/requirements.txt
+RUN pip install -r /consumer/requirements.txt
+
 # Override these environment variables at runtime for the specific container
 # Topic to consume
 ENV CONSUME_TOPIC=""
@@ -18,8 +22,5 @@ ENV COUCHDB_DATABASE=""
 
 # Copy content into image
 ADD src /consumer/src
-ADD requirements.txt /consumer/.
-# Install Python requirements
-RUN pip install -r /consumer/requirements.txt
 WORKDIR /consumer/src/.
-ENTRYPOINT [ "python3", "driver.py", "--run_consumer", "--verbose", "--topic", "${CONSUME_TOPIC}", "--bootstrap_server","${BOOTSTRAP_SERVER}", "--dump" ]
+ENTRYPOINT python3 driver.py --run_consumer --verbose --topic ${CONSUME_TOPIC} --bootstrap_server ${BOOTSTRAP_SERVER} --dump

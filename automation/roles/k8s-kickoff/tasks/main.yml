@@ -1,0 +1,20 @@
+---
+# Tasks to configure and start the Kubernetes Services and Deployments
+# First, need to get the Public IP of the first cloud VM to use for the
+# Advertised Listener on the broker0 deployment environment
+- name: Use public IP of first cloud VM as advertised listener on broker 0 pod environment
+  ansible.builtin.replace:
+    path: "/home/ubuntu/cs5287datapipeline/automation/k8s/deploy.yml"
+    regexp: 'EXTERNAL_BOOTSTRAP_SERVICE://50.16.31.149:30985'
+    replace: "EXTERNAL_BOOTSTRAP_SERVICE://{{ hostvars['127.0.0.1'].ec2_1.instances[0].public_ip_address }}:30985"
+
+- name: Create Kubernetes services with services.yml
+  command:
+    chdir: "/home/ubuntu/cs5287datapipeline/automation/k8s/"
+    cmd: kubectl apply -f services.yml
+
+- name: Create Kubernetes deployments with deploy.yml
+  command:
+    chdir: "/home/ubuntu/cs5287datapipeline/automation/k8s/"
+    cmd: kubectl apply -f deploy.yml
+...

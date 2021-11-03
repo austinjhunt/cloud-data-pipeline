@@ -14,13 +14,10 @@
     - python3-pip
     - jq
 
-- name: Create firewall rules for Zookeeper, Kafka, and CouchDB
-  become: yes
-  ufw:
-    rule: allow
-    port: "{{ item }}"
-  loop:
-  - "2181"
-  - "4369"
-  - "5984"
-  - "9092"
+- name: Clone the GitHub repository
+  git:
+    repo: https://github.com/austinjhunt/cs5287datapipeline.git
+    dest: /home/ubuntu/cs5287datapipeline
+    clone: yes
+    update: yes
+    force: yes

@@ -31,18 +31,18 @@
   roles:
     - k8s-master
 
-- hosts: localhost
-  tasks:
-    - name: copy hostvars to file
-      local_action:
-        module: copy
-        content: "{{ hostvars }}"
-        dest: "{{ playbook_dir }}/hostvars.json "
-    - name: copy groups to file
-      local_action:
-        module: copy
-        content: "{{ groups }}"
-        dest: "{{ playbook_dir }}/groups.json"
+# - hosts: localhost
+#   tasks:
+#     - name: copy hostvars to file
+#       local_action:
+#         module: copy
+#         content: "{{ hostvars }}"
+#         dest: "{{ playbook_dir }}/hostvars.json "
+#     - name: copy groups to file
+#       local_action:
+#         module: copy
+#         content: "{{ groups }}"
+#         dest: "{{ playbook_dir }}/groups.json"
 
 # Run specific K8s Worker setup on second cloud VM (join cluster initialized by master)
 - hosts: k8sworker
@@ -52,6 +52,10 @@
   roles:
     - k8s-worker
 
+- hosts: k8smaster
+  remote_user: ubuntu
+  roles:
+    - k8s-kickoff
 # LocalVM should clean up (stop) the cloud infrastructure now
 # - hosts: localvm
 #   remote_user: vagrant
