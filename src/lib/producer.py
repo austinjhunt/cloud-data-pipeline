@@ -86,5 +86,7 @@ class Producer:
                 self.kafka_producer.flush() # try to empty sending buffer
             except KafkaTimeoutError as e:
                 self.error(f'Timeout error when sending message: {str(e)}')
+            except Exception as e:
+                self.error(f'Exception when sending message: {str(e)}')
             time.sleep(self.sleep_interval)
         self.kafka_producer.close ()

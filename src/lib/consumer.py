@@ -2,23 +2,22 @@ from kafka import KafkaConsumer
 import logging
 import json
 import couchdb
+import os
 
 class Consumer:
-    def __init__(self, verbose=False, bootstrap_server='localhost', topics=['stock-market-data'],
-        couchdb_server="localhost", couchdb_user="admin", couchdb_password="123456", couchdb_database="cs5287"
-    ):
+    def __init__(self, verbose=False, bootstrap_server='localhost', topics=['stock-market-data']):
+        # Use environment
+        self.couchdb_server = os.environ.get('COUCHDB_SERVER', 'localhost')
+        self.couchdb_user = os.environ.get('COUCHDB_USER', 'admin')
+        self.couchdb_password = os.environ.get('COUCHDB_PASSWORD', '123456')
+        self.couchdb_database = os.environ.get('COUCHDB_DATABASE', 'couchie')
+
         self.setup_logging(verbose=verbose)
         self.kafka_consumer = KafkaConsumer(
             bootstrap_servers=f'{bootstrap_server}' # PUBLIC_IP:PORT
         )
         self.info(f'Creating consumer with bootstrap_server={bootstrap_server}, topics={topics}')
         self.kafka_consumer.subscribe(topics=topics)
-
-        # settings for couchdb
-        self.couchdb_server = couchdb_server
-        self.couchdb_user = couchdb_user
-        self.couchdb_password = couchdb_password
-        self.couchdb_database = couchdb_database
 
     def connect_couchdb(self):
         # couchdb connection

@@ -1,0 +1,25 @@
+FROM ubuntu:latest
+RUN apt update && \
+    apt upgrade -y && \
+    apt install -y python3-dev python3-pip && \
+    cd /usr/local/bin && \
+    ln -s /usr/bin/python3 python && \
+    pip install --upgrade pip
+# Override these environment variables at runtime for the specific container
+# Topic to consume
+ENV CONSUME_TOPIC=""
+# Kafka cluster bootstrap server in IP:PORT format
+ENV BOOTSTRAP_SERVER=""
+# Couchdb Configuration
+ENV COUCHDB_SERVER=""
+ENV COUCHDB_USER=""
+ENV COUCHDB_PASSWORD=""
+ENV COUCHDB_DATABASE=""
+
+# Copy content into image
+ADD src /consumer/src
+ADD requirements.txt /consumer/.
+# Install Python requirements
+RUN pip install -r /consumer/requirements.txt
+WORKDIR /consumer/src/.
+ENTRYPOINT [ "python3", "driver.py", "--run_consumer", "--verbose", "--topic", "${CONSUME_TOPIC}", "--bootstrap_server","${BOOTSTRAP_SERVER}", "--dump" ]

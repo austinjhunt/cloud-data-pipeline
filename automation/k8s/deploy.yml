@@ -1,5 +1,7 @@
+# ZOOKEEPER SERVICES - DEPEND ON zookeeper-deployment
 # Service objects for exposing the deployments corresponding to the selectors
 ---
+# If you are inside of the cluster, access a service with cluster DNS name of: service_name.service_namespace.svc.cluster.local
 # ClusterIP service for accessing zookeeper from within cluster
 apiVersion: v1
 kind: Service
@@ -36,55 +38,20 @@ spec:
       port: 3888
       targetPort: 3888
       name: leader-election
+
+# END ZOOKEEPER SERVICES - DEPEND ON zookeeper-deployment
+
 ---
-# NodePort service for accessing couchdb from public Node IP : 30984
+### Expose kafka cluster internally for brokers to self-reference and
+### for consumer to use for bootstrap
 apiVersion: v1
 kind: Service
 metadata:
-  name: couchdb-service
-spec:
-  selector:
-    app: couchdb
-  type: NodePort
-  ports:
-    # Standard clustered port for all HTTP API requests (and web GUI)
-    - protocol: TCP
-      port: 5984
-      targetPort: 5984
-      nodePort: 30984
-      name: http
----
-# Headless service for couchdb reachable from within cluster
-apiVersion: v1
-kind: Service
-metadata:
-  name: couchdb-service-headless
-spec:
-  selector:
-    app: couchdb
-  type: ClusterIP
-  clusterIP: None
-  ports:
-    # Standard clustered port for all HTTP API requests (and web GUI)
-    - protocol: TCP
-      port: 5984
-      targetPort: 5984
-      name: http
-    # Erlang port mapper daemon (epmd)
-    - protocol: TCP
-      port: 4369
-      targetPort: 4369
-      name: epmd
----
-# ClusterIP service to access Kafka from within cluster
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka-service
+  name: kafka-service-internal
 spec:
   type: ClusterIP
   selector:
-    app: kafka
+    app: kafka-deployment
   ports:
     # Client connections to Kafka broker cluster
     - protocol: TCP
@@ -92,7 +59,26 @@ spec:
       targetPort: 9092
       name: client
 ---
+# Expose Kafka cluster externally for producers to connect
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service-external
+spec:
+  type: NodePort
+  selector:
+    app: kafka-deployment
+  ports:
+    # External client connections to Kafka bootstrap node
+    - name: bootstrap
+      protocol: TCP
+      port: 9092
+      targetPort: 9092
+      nodePort: 30985
 
+### END KAFKA SERVICES - DEPEND ON KAFKA BROKER DEPLOYMENTS ###
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -100,7 +86,7 @@ metadata:
   labels:
     app: zookeeper
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: zookeeper
@@ -128,18 +114,23 @@ spec:
             memory: "1Gi"
             cpu: "0.5"
           limits:
-            memory: "1.5Gi"
+            memory: "1.2Gi"
             cpu: "0.6"
+
+
 ---
 
+### KAFKA BROKER DEPLOYMENTS DEPEND ON zookeeper-service ###
+# Deployment for broker 0 - BOOTSTRAP SERVER in Kafka Cluster, so we can
+# expose a BOOTSTRAP SERVER SERVICE that consumer and producer can connect to
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-deployment
   labels:
-    app: kafka
+    app: kafka-deployment
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: kafka
@@ -148,6 +139,11 @@ spec:
       labels:
         app: kafka
     spec:
+      # Wait for zookeeper to start up first
+      initContainers:
+      - name: wait
+        image: alpine
+        command: ["/bin/sh", "-c", "for i in $(seq 1 300); do nc -zvw1 zookeeper-service 2181 && exit 0 || sleep 3; done; exit 1"]
       containers:
       # Kafka Broker 0
       - name: broker0
@@ -156,41 +152,51 @@ spec:
         - containerPort: 9092
           name: client
         env:
+        # - name: KAFKA_CFG_LISTENERS
+        #   value: "PLAINTEXT://broker0:9092"
+        # - name: KAFKA_CFG_ADVERTISED_LISTENERS
+        #   value: "PLAINTEXT://broker0:9092"
         - name: KAFKA_CFG_ZOOKEEPER_CONNECT
-          value: "zookeeper:2181"
+          value: "zookeeper-service:2181"
         - name: KAFKA_BROKER_ID
           value: "0"
         - name: ALLOW_PLAINTEXT_LISTENER
           value: "yes"
         resources:
-          # Kafka Hardware Requirements: https://knowledgecenter.gcora.genpact.com/help/kafka-cluster-minimum-requirements
           requests:
-            memory: "64Mi"
-            cpu: "250m" # 250 milliCPUs
+              memory: "256Mi"
+              cpu: "0.5"
           limits:
-            memory: "128Mi"
-            cpu: "500m"
-      # Kafka Broker 1
+            memory: "512Mi"
+            cpu: "0.6"
+      #  Broker 1
       - name: broker1
         image: bitnami/kafka
         ports:
-        - containerPort: 9092
+        - containerPort: 9093
           name: client
         env:
+        - name: KAFKA_CFG_LISTENERS
+          value: "PLAINTEXT://:9093"
+        - name: KAFKA_CFG_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://:9093"
         - name: KAFKA_CFG_ZOOKEEPER_CONNECT
-          value: "zookeeper:2181"
+          value: "zookeeper-service:2181"
         - name: KAFKA_BROKER_ID
           value: "1"
         - name: ALLOW_PLAINTEXT_LISTENER
           value: "yes"
         resources:
           requests:
-            memory: "64Mi"
-            cpu: "250m" # 250 milliCPUs
+              memory: "256Mi"
+              cpu: "0.5"
           limits:
-            memory: "128Mi"
-            cpu: "500m"
+            memory: "512Mi"
+            cpu: "0.6"
+### END KAFKA BROKER DEPLOYMENTS DEPEND ON zookeeper-service ###
+
 ---
+### COUCHDB DEPLOYMENT ###
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -198,7 +204,7 @@ metadata:
   labels:
     app: couchdb
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: couchdb
@@ -211,14 +217,7 @@ spec:
       - name: couchdb
         image: couchdb
         ports:
-        - containerPort: 80
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "250m" # 250 milliCPUs
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
+        - containerPort: 5984
         env:
         - name: COUCHDB_USER
           value: admin
@@ -226,3 +225,103 @@ spec:
           value: "789456123"
         - name: NODENAME
           value: couchie-that-hurts
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "0.5" # 250 milliCPUs
+          limits:
+            memory: "512Mi"
+            cpu: "0.7"
+### END COUCHDB DEPLOYMENT ###
+---
+### COUCHDB SERVICES FOR INTERNAL AND EXTERNAL ACCESS ###
+# NodePort service for accessing couchdb from public Node IP : 30984
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-service-external
+spec:
+  selector:
+    app: couchdb
+  type: NodePort
+  ports:
+    # Standard clustered port for all HTTP API requests (and web GUI)
+    - protocol: TCP
+      port: 5984
+      targetPort: 5984
+      nodePort: 30984
+      name: http
+---
+# Internal service for couchdb reachable from within cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-service-internal
+spec:
+  selector:
+    app: couchdb
+  type: ClusterIP
+  ports:
+    # Standard clustered port for all HTTP API requests (and web GUI)
+    - protocol: TCP
+      port: 5984
+      targetPort: 5984
+      name: http
+    # Erlang port mapper daemon (epmd)
+    - protocol: TCP
+      port: 4369
+      targetPort: 4369
+      name: epmd
+### END COUCHDB SERVICES FOR INTERNAL AND EXTERNAL ACCESS ###
+---
+### CONSUMER DEPLOYMENT; DOES NOT REQUIRE PUBLICLY
+### EXPOSING ANY SPECIFIC PORT SO NO SERVICE ASSIGNED ###
+# Consumer with custom consumer Docker image
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer-deployment
+  labels:
+    app: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      # Wait for couchdb and bootstrap kafka member to start first
+      initContainers:
+      - name: wait
+        image: alpine
+        command: ["sh", "-c", "for i in $(seq 1 300); do nc -zvw1 couchdb-service-internal 5984 && nc -zvw1 kafka-service-internal 9092 && exit 0 || sleep 3; done; exit 1"]
+      containers:
+      - name: consumer
+        image: austinjhunt/5287kafkaconsumer
+        env:
+        - name: CONSUME_TOPIC
+          value: stock-market-data
+        - name: BOOTSTRAP_SERVER
+          # serviceName.namespace.svc.cluster.local
+          value: "kafka-service-internal:9092"
+        - name: COUCHDB_SERVER
+          # serviceName.namespace.svc.cluster.local
+          value: "couchdb-service-internal"
+        - name: COUCHDB_USER
+          value: "admin"
+        - name: COUCHDB_PASSWORD
+          value: "123456"
+        - name: COUCHDB_DATABASE
+          value: "cs5287"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "0.5" # 250 milliCPUs
+          limits:
+            memory: "512Mi"
+            cpu: "0.7"
+### END CONSUMER DEPLOYMENT; DOES NOT REQUIRE PUBLICLY
+### EXPOSING ANY SPECIFIC PORT SO NO SERVICE ASSIGNED ###
