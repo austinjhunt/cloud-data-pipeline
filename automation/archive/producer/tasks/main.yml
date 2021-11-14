@@ -6,7 +6,3 @@
   async: 600 # allow 10 minutes
   poll: 0
   register: producer
-
-
-  # Manual Producer Command:
-  # python3 driver.py -v -p -pa AustinProducer -n 20 -t stock-market-data -ss AMZN  --bootstrap_server 3.94.206.118  --data_sink_server 3.86.109.168

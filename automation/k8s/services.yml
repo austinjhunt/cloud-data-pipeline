@@ -76,6 +76,9 @@ spec:
       targetPort: 9093
       nodePort: 30985
 
+   #  Exec producer: python3 driver.py -v -p -pa AustinProducer -n 20 -t stock-market-data -ss AMZN  --bootstrap_server 35.153.52.115:30985
+
+
 ### END KAFKA SERVICES - DEPEND ON KAFKA BROKER DEPLOYMENTS ###
 
 ---

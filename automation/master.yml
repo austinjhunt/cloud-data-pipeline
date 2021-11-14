@@ -1,7 +1,7 @@
----
-# Local VM should orchestrate cloud infrastructure
-# cloud, k8smaster, k8sworker are groups created dynamically by cloud-orchestrator role
-# they refer to both EC2 instances, the first EC2 instance, and the second EC2 instance respectively
+# ---
+# # Local VM should orchestrate cloud infrastructure
+# # cloud, k8smaster, k8sworker are groups created dynamically by cloud-orchestrator role
+# # they refer to both EC2 instances, the first EC2 instance, and the second EC2 instance respectively
 - hosts: localvm
   remote_user: vagrant
   become: true
@@ -31,19 +31,6 @@
   roles:
     - k8s-master
 
-# - hosts: localhost
-#   tasks:
-#     - name: copy hostvars to file
-#       local_action:
-#         module: copy
-#         content: "{{ hostvars }}"
-#         dest: "{{ playbook_dir }}/hostvars.json "
-#     - name: copy groups to file
-#       local_action:
-#         module: copy
-#         content: "{{ groups }}"
-#         dest: "{{ playbook_dir }}/groups.json"
-
 # Run specific K8s Worker setup on second cloud VM (join cluster initialized by master)
 - hosts: k8sworker
   become: yes
@@ -56,16 +43,26 @@
   remote_user: ubuntu
   roles:
     - k8s-kickoff
+
+- hosts: localvm
+  remote_user: vagrant
+  tasks:
+    - name: Wait for Kubernetes Cluster to run for 1 minute
+      wait_for:
+        timeout: 60
+
 # LocalVM should clean up (stop) the cloud infrastructure now
-# - hosts: localvm
-#   remote_user: vagrant
-#   become: true
-#   gather_facts: true
-#   pre_tasks:
-#     # set up the local VM with apt packages and python requirements before doing anything else
-#     - name: Set up!
-#       import_tasks: setup-master.yml
-#   roles:
-#     - cloud-terminator
+- hosts: localvm
+  remote_user: vagrant
+  become: true
+  gather_facts: true
+  pre_tasks:
+    # set up the local VM with apt packages and python requirements before doing anything else
+    - name: Set up!
+      import_tasks: setup-master.yml
+  roles:
+    - cloud-terminator
+
+
 
 ...
