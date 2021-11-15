@@ -1,3 +1,6 @@
+# Build this image (from root of project): docker build -t austinjhunt/5287kafkaconsumer -f Dockerfile.consumer .
+# Push this image with: docker push austinjhunt/5287kafkaconsumer
+
 FROM ubuntu:latest
 RUN apt update && \
     apt upgrade -y && \

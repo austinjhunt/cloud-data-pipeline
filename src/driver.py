@@ -127,7 +127,7 @@ parser.add_argument('-r', '--read_data_from_file', help=(
     'to read data from a CSV file instead of producing its '
     'own custom data; must be a valid .csv file path on your machine'
     ), type=str)
-parser.add_argument('-b', '--batch_size', help=(
+parser.add_argument('-ba', '--batch_size', help=(
     'WHEN RUNNING PRODUCER WITH -p|--producer AND -r|--read_data_from_file CSV_FILENAME, use --batch_size '
     'to tell producer how many records of the CSV to include in each message; REQUIRED'
     ), type=int)
@@ -165,13 +165,13 @@ if args.run_producer:
         if not args.batch_size:
             raise Exception(
                 'when using -r|--read_data_from_file, you MUST include '
-                '-b|--batch_size to tell producer how many records of '
+                '-ba|--batch_size to tell producer how many records of '
                 'the CSV to include in each message')
         # Try to read the file provided ; throw error if it fails
         try:
             driver.info('Using provided data file instead of custom producer data in memory')
             f = open(args.read_data_from_file,'r')
-            driver.debug(f'File {args.read_data_from_file} has {len(f.readlines)} lines')
+            driver.debug(f'File {args.read_data_from_file} has {len(f.readlines())} lines')
             f.close()
             driver.run_producer(
                 topic=args.topic,

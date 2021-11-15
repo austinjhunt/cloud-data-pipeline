@@ -85,7 +85,9 @@ class Producer:
                 # make reader subscriptable by wrapping it into a list to help with batching
                 reader = list(csv.reader(csvfile, delimiter=','))
                 csvfile_chunks = self._split_list_into_n_chunks(reader, self.batch_size)
+                self.info(f'Created {len(csvfile_chunks)} batches of size {self.batch_size} from CSV file')
                 for i, data_chunk in enumerate(csvfile_chunks):
+                    self.debug(f'Producing message for chunk {i}')
                     message = {
                         'chunk': data_chunk,
                         'timestamp': datetime.datetime.now().isoformat(),
