@@ -222,7 +222,7 @@
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
       app: datapipeline-a3
     key_name: aws-keypair3
-    instance_type: t2.medium
+    instance_type: t2.xlarge
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
     network:
       assign_public_ip: yes
@@ -252,7 +252,7 @@
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
       app: datapipeline-a3
     key_name: aws-keypair3
-    instance_type: t2.medium
+    instance_type: t2.xlarge
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
     network:
       assign_public_ip: yes
