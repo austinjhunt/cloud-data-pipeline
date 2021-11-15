@@ -25,7 +25,7 @@
     aws_access_key: "{{ aws_access_key_id.stdout }}"
     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
     filters:
-      "tag:app": datapipeline
+      "tag:app": datapipeline-a3
       instance-state-name: running
     state: stopped
     wait: yes

@@ -177,6 +177,31 @@
         - 30985
         cidr_ip: 0.0.0.0/0
         rule_desc: NodePort for Kafka Kubernetes Service for public bootstrap access
+      - proto: tcp
+        ports:
+        - 7077
+        - 8080
+        - 30008
+        cidr_ip: 0.0.0.0/0
+        rule_desc: Apache spark master
+      - proto: tcp
+        ports:
+        - 7076
+        cidr_ip: 0.0.0.0/0
+        rule_desc: Apache spark driver
+      - proto: tcp
+        ports:
+        - 7078
+        - 8081
+        cidr_ip: 0.0.0.0/0
+        rule_desc: Apache spark worker
+      - proto: tcp
+        ports:
+        - 7079
+        cidr_ip: 0.0.0.0/0
+        rule_desc: Apache spark block manager
+
+
     state: present
     region: us-east-1
 

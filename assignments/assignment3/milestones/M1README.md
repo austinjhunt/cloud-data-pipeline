@@ -1,4 +1,4 @@
-# Milestone 1
+# Milestone 1 ([Video](https://youtu.be/8lh9PdxvgG0))
 
 ## Requirements
 - You will need to tear down at least one of the VMs prior to this assignment because we will need the master to be a m1.medium machine. On Chameleon, they allow you to resize it. I have tried this and it worked. So my suggestion is to resize say VM2 to m1.medium rather than having to terminate and recreate both VMs. If you prefer to terminate and recreate, then reuse your vagrantfile and Assignment 2 playbooks to create the two VMs (say VM2 is m1.medium and VM3 still is m1.small)

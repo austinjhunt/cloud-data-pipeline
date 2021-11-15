@@ -35,15 +35,19 @@ class Consumer:
         """ Method to run consumption of messages until messages no longer arrive """
         self.info('Beginning consumption')
         for msg in self.kafka_consumer:
-            self.info(
-                f'Receiving message: {json.loads(str(msg.value, "ascii"))}'
-            )
-            if save_data:
+            try:
                 self.info(
-                    f'Saving to database!'
+                    f'Receiving message: {json.loads(str(msg.value, "ascii"))}'
                 )
-                msg = json.loads(str(msg.value, "ascii"))
-                self.db.save(msg)
+                if save_data:
+                    self.info(
+                        f'Saving to database!'
+                    )
+                    msg = json.loads(str(msg.value, "ascii"))
+                    self.db.save(msg)
+            except Exception as e:
+                self.error(e)
+                self.db.save({'ConsumptionError': str(e)})
         self.kafka_consumer.close()
 
     def setup_logging(self, verbose):

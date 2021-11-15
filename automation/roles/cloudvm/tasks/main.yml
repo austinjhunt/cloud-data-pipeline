@@ -14,7 +14,17 @@
     - python3-pip
     - jq
 
+- name: Recursively change ownership /home/ubuntu to ubuntu user and group
+  ansible.builtin.file:
+    path: /home/ubuntu
+    state: directory
+    recurse: yes
+    owner: ubuntu
+    group: ubuntu
+
 - name: Clone the GitHub repository
+  remote_user: ubuntu
+  become: no
   git:
     repo: https://github.com/austinjhunt/cs5287datapipeline.git
     dest: /home/ubuntu/cs5287datapipeline

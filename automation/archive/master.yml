@@ -80,19 +80,4 @@
       import_tasks: setup-master.yml
   roles:
     - cloud-terminator
-
-# run mannualy for demo only
-# Local VM should run a Kafka Producer
-- hosts: localvm
-  # Ubuntu 20.04 and other versions of Debian Linux ship with Python 3 pre-installed. No need to install.
-  remote_user: vagrant
-  become: true
-  gather_facts: true
-  vars:
-    bootstrap_server: 3.94.206.118
-    data_sink_server: 3.86.109.168
-  roles:
-    - producer_manual
-    # Wait for producer to finish before moving on
-    - wait-for-producer_manual
 ...

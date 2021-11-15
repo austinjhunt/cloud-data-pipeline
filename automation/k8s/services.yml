@@ -76,6 +76,9 @@ spec:
       targetPort: 9093
       nodePort: 30985
 
+   #  Exec producer: python3 driver.py -v -p -pa AustinProducer -n 20 -t stock-market-data --bootstrap_server 52.6.36.19:30985 -r /Users/huntaj/dev/vandy/Fall2021/cs5287/cs5287progassign1/energy-data/xaa.csv -ba 1000
+
+
 ### END KAFKA SERVICES - DEPEND ON KAFKA BROKER DEPLOYMENTS ###
 
 ---
@@ -119,3 +122,78 @@ spec:
       name: epmd
 ### END COUCHDB SERVICES FOR INTERNAL AND EXTERNAL ACCESS ###
 ---
+
+###############################################
+###############################################
+############ Apache Spark Services ############
+###############################################
+###############################################
+
+# CS4287-5287
+# Author: Aniruddha Gokhale
+# Created: Spring 2021
+#
+# For assignment #4
+#
+# This is a declarative approach to describe a Kubernetes based
+# deployment of an application.  Since this is YAML, the indentation
+# is very important. This is service declaration for a Spark master
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master-svc
+spec:
+  type: NodePort   # we want this published outside so outside entities can reach it
+  selector:
+    app: sparkMasterApp     # used for matching
+  ports:
+    - name: spark-master-port   # not really needed
+      protocol: TCP  # this is default
+      port: 7077
+      targetPort: 7077   # if not specified, is the same as port
+      nodePort: 30007    # externally as 30000
+    - name: spark-gui-port   # not really needed
+      protocol: TCP  # this is default
+      port: 8080
+      targetPort: 8080   # if not specified, is the same as port
+      nodePort: 30008    # externally as 30000
+---
+# CS4287-5287
+# Author: Aniruddha Gokhale
+# Created: Spring 2021
+#
+# For assignment #4
+#
+# This is a declarative approach to describe a Kubernetes based
+# deployment of an application.  Since this is YAML, the indentation
+# is very important. This is service declaration for a Spark driver
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-driver-svc
+spec:
+  type: ClusterIP   # published inside the cluster (default service mode)
+  selector:
+    app: sparkDriverApp     # used for matching
+  ports:
+    - name: spark-driver-port   # not really needed
+      protocol: TCP  # this is default
+      port: 7076     # driver listens on this port
+      targetPort: 7076   # if not specified, is the same as port
+    - name: spark-blkmgr-port   # not really needed
+      protocol: TCP  # this is default
+      port: 7079     # used by the block manager
+      targetPort: 7079   # if not specified, is the same as port
+    - name: spark-driver-gui   # not really needed
+      protocol: TCP  # this is default
+      port: 4040     # we will use this for
+      targetPort: 4040   # if not specified, is the same as port
+
+###############################################
+###############################################
+########## End Apache Spark Services ##########
+###############################################
+###############################################
+
