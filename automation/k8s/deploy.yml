@@ -33,10 +33,10 @@ spec:
         resources:
           requests:
             memory: "1Gi"
-            cpu: "0.5"
+            cpu: "0.25"
           limits:
             memory: "1Gi"
-            cpu: "0.6"
+            cpu: "0.25"
 ---
 ### KAFKA BROKER DEPLOYMENTS DEPEND ON zookeeper-service ###
 # Deployment for broker 0 - BOOTSTRAP SERVER in Kafka Cluster, so we can
@@ -97,10 +97,10 @@ spec:
         resources:
           requests:
               memory: "256Mi"
-              cpu: "0.5"
+              cpu: "0.25"
           limits:
             memory: "512Mi"
-            cpu: "0.6"
+            cpu: "0.25"
 ---
 # Deployment for broker 1 - BOOTSTRAP SERVER in Kafka Cluster, so we can
 # expose a BOOTSTRAP SERVER SERVICE that consumer and producer can connect to
@@ -159,10 +159,10 @@ spec:
         resources:
           requests:
               memory: "256Mi"
-              cpu: "0.5"
+              cpu: "0.25"
           limits:
             memory: "512Mi"
-            cpu: "0.6"
+            cpu: "0.25"
 
 ### END KAFKA BROKER DEPLOYMENTS DEPEND ON zookeeper-service ###
 
@@ -199,10 +199,10 @@ spec:
         resources:
           requests:
             memory: "256Mi"
-            cpu: "0.5" # 250 milliCPUs
+            cpu: "0.25" # 250 milliCPUs
           limits:
             memory: "512Mi"
-            cpu: "0.7"
+            cpu: "0.25"
 ### END COUCHDB DEPLOYMENT ###
 ---
 ### CONSUMER DEPLOYMENT; DOES NOT REQUIRE PUBLICLY
@@ -250,10 +250,10 @@ spec:
         resources:
           requests:
             memory: "256Mi"
-            cpu: "0.5" # 250 milliCPUs
+            cpu: "0.25" # 250 milliCPUs
           limits:
             memory: "512Mi"
-            cpu: "0.7"
+            cpu: "0.25"
 ### END CONSUMER DEPLOYMENT; DOES NOT REQUIRE PUBLICLY
 ### EXPOSING ANY SPECIFIC PORT SO NO SERVICE ASSIGNED ###
 ---
@@ -293,10 +293,10 @@ spec:                     # This is the specification
           resources:
             requests:
               memory: "256Mi"
-              cpu: "0.5" # 250 milliCPUs
+              cpu: "0.25" # 250 milliCPUs
             limits:
               memory: "512Mi"
-              cpu: "0.7"
+              cpu: "0.25"
           image: austinjhunt/cs5287spark   # this is the image in private registry
           imagePullPolicy: Always  # This forces the node to pull the image
           ports:            # Spark master port
@@ -354,10 +354,10 @@ spec:                     # This is the specification where we can even put the 
           resources:
             requests:
               memory: "256Mi"
-              cpu: "0.5" # 250 milliCPUs
+              cpu: "0.25" # 250 milliCPUs
             limits:
               memory: "512Mi"
-              cpu: "0.7"
+              cpu: "0.25"
           # used to name container
           image: austinjhunt/cs5287spark   # this is the image in private registry
           ports:            # Spark worker port
@@ -420,10 +420,10 @@ spec:                     # This is the specification
           resources:
             requests:
               memory: "256Mi"
-              cpu: "0.5" # 250 milliCPUs
+              cpu: "0.25" # 250 milliCPUs
             limits:
               memory: "512Mi"
-              cpu: "0.7"
+              cpu: "0.25"
           image: austinjhunt/cs5287spark   # this is the image in private registry
           imagePullPolicy: Always  # This forces the node to pull the image
           env:
