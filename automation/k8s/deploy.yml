@@ -318,7 +318,7 @@ spec:                     # This is the specification
             - name: COUCHDB_USER
               value: admin
             - name: COUCHDB_PASSWORD
-              value: 789456123
+              value: "789456123"
             - name: COUCHDB_DATABASE
               value: cs5287
 
