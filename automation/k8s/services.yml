@@ -76,7 +76,7 @@ spec:
       targetPort: 9093
       nodePort: 30985
 
-   #  Exec producer: python3 driver.py -v -p -pa AustinProducer -n 20 -t stock-market-data --bootstrap_server 52.6.36.19:30985 -r /Users/huntaj/dev/vandy/Fall2021/cs5287/cs5287progassign1/energy-data/xaa.csv -ba 1000
+   #  Exec producer: python3 driver.py -v -p -pa AustinProducer -n 20 -t stock-market-data --bootstrap_server 100.24.242.30:30985 -r /Users/huntaj/dev/vandy/Fall2021/cs5287/cs5287progassign1/energy-data/xaa.csv -ba 1000
 
 
 ### END KAFKA SERVICES - DEPEND ON KAFKA BROKER DEPLOYMENTS ###

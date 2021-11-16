@@ -224,6 +224,11 @@
     key_name: aws-keypair3
     instance_type: t2.2xlarge
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 16
+          delete_on_termination: true
     network:
       assign_public_ip: yes
       delete_on_termination: yes
@@ -238,12 +243,6 @@
     security_group: kafka-couchdb-zookeeper-k8s-security
   register: ec2_1
 
-# - name: Create an EBS volume and attach it to EC2 instance 1
-#   become: false
-#   environment: "{{ env_vars }}"
-#   amazon.aws.ec2_vol:
-#     aws_access_key: "{{ aws_access_key_id.stdout }}"
-#     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
 
 - name: Create EC2 Instance 2
   become: false
@@ -261,6 +260,11 @@
     key_name: aws-keypair3
     instance_type: t2.2xlarge
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 16
+          delete_on_termination: true
     network:
       assign_public_ip: yes
       delete_on_termination: yes
@@ -274,6 +278,7 @@
     # Security group to set up appropriate firewall rules
     security_group: kafka-couchdb-zookeeper-k8s-security
   register: ec2_2
+
 
 - name: Wait for SSH to come up on VM 1 # SSH needs to work for rest of playbook to continue
   wait_for:
