@@ -37,11 +37,4 @@ ENV SPARK_HOME=/spark-3.2.0-bin-hadoop3.2
 ENV PATH=${PATH}:${SPARK_HOME}/sbin:${SPARK_HOME}/bin
 
 
-# Define the following environment variables at runtime for the container for the Python script to work
-# COUCHDB_SERVER
-# COUCHDB_USER
-# COUCHDB_PASSWORD
-# COUCHDB_DATABASE
-CMD ["python3", "/mapreduce.py"]
-
 
