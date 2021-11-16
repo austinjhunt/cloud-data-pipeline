@@ -11,7 +11,8 @@ from pyspark.sql import SparkSession, Row
 class IOTSparkMapReducer:
     def __init__(self, verbose=False):
         # Use environment
-        self.couchdb_server = os.environ.get('COUCHDB_SERVER', 'localhost:5984')
+        self.couchdb_server = os.environ.get(
+            'COUCHDB_SERVER', 'localhost:5984')
         self.couchdb_user = os.environ.get('COUCHDB_USER', 'admin')
         self.couchdb_password = os.environ.get('COUCHDB_PASSWORD', '123456')
         self.couchdb_database = os.environ.get('COUCHDB_DATABASE', 'couchie')
@@ -24,6 +25,9 @@ class IOTSparkMapReducer:
             f"DB: {self.couchdb_database}")
 
         self.connect_couchdb()
+
+    def database_exists(self, database):
+        return database in self.couch
 
     def get_all_data_chunks(self):
         """ Each document in Couchdb stores, under the 'chunk' key, a value that
@@ -61,33 +65,36 @@ class IOTSparkMapReducer:
                     plug_id=int(x[4]),
                     household_id=int(x[5]),
                     house_id=int(x[6])
-            ) for x in chunks if x[3] == filters[property]).rdd.map(
+                ) for x in chunks if x[3] == filters[property]).rdd.map(
                 lambda row: (
                     (row.plug_id, row.household_id, row.house_id), row.value
                 )
             )
         reduced = mapped.aggregateByKey(
-            zeroValue=(0,0),
+            zeroValue=(0, 0),
             # simultaneously calculate the SUM (the numerator for the
             # average that we want to compute), and COUNT (the
             # denominator for the average that we want to compute):
-            seqFunc=lambda a,b: (a[0] + b,    a[1] + 1),
-            combFunc=lambda a,b: (a[0] + b[0], a[1] + b[1]))\
-        .mapValues(lambda v: v[0]/v[1]).collect() # divide sum by count
+            seqFunc=lambda a, b: (a[0] + b,    a[1] + 1),
+            combFunc=lambda a, b: (a[0] + b[0], a[1] + b[1]))\
+            .mapValues(lambda v: v[0]/v[1]).collect()  # divide sum by count
         return reduced
-
 
     def connect_couchdb(self):
         # couchdb connection
-        self.debug(f'Connecting to CouchDB server at: http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}/"')
-        self.couch = couchdb.Server(f"http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}/")
+        self.debug(
+            f'Connecting to CouchDB server at: http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}/"')
+        self.couch = couchdb.Server(
+            f"http://{self.couchdb_user}:{self.couchdb_password}@{self.couchdb_server}/")
         # create the database if not existing, get the database if already existing
         try:
             self.db = self.couch.create(self.couchdb_database)
-            self.debug(f"Successfully created new CouchDB database {self.couchdb_database}")
+            self.debug(
+                f"Successfully created new CouchDB database {self.couchdb_database}")
         except:
             self.db = self.couch[self.couchdb_database]
-            self.debug(f"Successfully connected to existing CouchDB database {self.couchdb_database}")
+            self.debug(
+                f"Successfully connected to existing CouchDB database {self.couchdb_database}")
 
     def setup_logging(self, verbose):
         """ set up self.logger for producer logging """
@@ -97,10 +104,10 @@ class IOTSparkMapReducer:
         handler.setFormatter(formatter)
         self.prefix = {'prefix': 'IOTSparkMapReducer'}
         self.logger.addHandler(handler)
-        self.logger = logging.LoggerAdapter(self.logger, self.prefix )
+        self.logger = logging.LoggerAdapter(self.logger, self.prefix)
         if verbose:
             self.logger.setLevel(logging.DEBUG)
-            self.logger.debug('Debug mode enabled', extra=self.prefix )
+            self.logger.debug('Debug mode enabled', extra=self.prefix)
         else:
             self.logger.setLevel(logging.INFO)
 
@@ -123,10 +130,12 @@ class IOTSparkMapReducer:
         """ Write a list to CouchDB database """
         try:
             db = self.couch.create(db_name)
-            self.debug(f"Successfully created new CouchDB database {self.couchdb_database}")
+            self.debug(
+                f"Successfully created new CouchDB database {self.couchdb_database}")
         except:
             db = self.couch[db_name]
-            self.debug(f"Successfully connected to existing CouchDB database {self.couchdb_database}")
+            self.debug(
+                f"Successfully connected to existing CouchDB database {self.couchdb_database}")
         self.debug(f'Preparing to save {len(lst)} items to database')
         fails = 0
         for msg in lst:
@@ -145,7 +154,7 @@ class IOTSparkMapReducer:
         self.debug(f"Failed to send {fails} items")
 
     def validate(self):
-        """ Count number of unique (row.plug_id, row.household_id, row.house_id) tuples """
+        """ used only for testing/development; Count number of unique (row.plug_id, row.household_id, row.house_id) tuples """
         d = {}
         num_chunks = 0
         potential = 0
@@ -172,8 +181,16 @@ class IOTSparkMapReducer:
         print(f'Potential Number of Tuples: {potential} ')
         return d
 
+
 if __name__ == "__main__":
     master = IOTSparkMapReducer(verbose=True)
+    # wait for the signal that the database is ready to be read from
+    # the signal comes in the form of a database called "complete" added to the couchdb server.
+    while not master.database_exists("complete"):
+        master.debug("waiting on 'complete' database creation to signal Spark Analysis")
+        time.sleep(3)
+
+    master.info("CouchDB Server is now ready, beginning Spark Analysis")
     # Use mapreduce to get the average values for both properties 'work' and 'load'
     avg_work = master.compute_property_avg_from_chunks(
         chunks=master.get_all_data_chunks(),

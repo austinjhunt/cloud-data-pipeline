@@ -288,6 +288,12 @@ spec:                     # This is the specification
       nodeSelector:
         # we force k8s to run Spark master on this node
         kubernetes.io/hostname: kubemaster
+      # Wait for couchdb before starting spark containers
+      initContainers:
+      - name: wait
+        image: alpine
+        command: ["sh", "-c", "for i in $(seq 1 300); do nc -zvw1 couchdb-service-internal 5984 && exit 0 || sleep 3; done; exit 1"]
+
       containers:
         - name: spark-master
           resources:
@@ -313,14 +319,6 @@ spec:                     # This is the specification
             # below. So had to set it here.
             - name: SPARK_HOME
               value: "/spark-3.2.0-bin-hadoop3.2"
-            - name: COUCHDB_SERVER
-              value: couchdb-service-internal:5984
-            - name: COUCHDB_USER
-              value: admin
-            - name: COUCHDB_PASSWORD
-              value: "789456123"
-            - name: COUCHDB_DATABASE
-              value: cs5287
 
           command: ["$(SPARK_HOME)/sbin/start-master.sh"]
           args: ["--host", "spark-master-host"]  # provide the floating IP addr of the master VM
@@ -438,6 +436,14 @@ spec:                     # This is the specification
               value: "spark-driver-host"
             - name: SPARK_HOME
               value: "/spark-3.2.0-bin-hadoop3.2"
+            - name: COUCHDB_SERVER
+              value: couchdb-service-internal:5984
+            - name: COUCHDB_USER
+              value: admin
+            - name: COUCHDB_PASSWORD
+              value: "789456123"
+            - name: COUCHDB_DATABASE
+              value: cs5287
 
           ports:            # Spark driver port
             - containerPort: 4040  # the dashboard
@@ -449,10 +455,10 @@ spec:                     # This is the specification
           # number of iterations. For convenience, a run.sh script is provided that you can
           # copy into the running pod, then exec into that pod and execute the script, which
           # will run the same code 20 times. You can change the iterations count in the script.
-          command: ["tail"]
-          args: ["-f", "/dev/null"]
-#          command: ["$(SPARK_HOME)/bin/spark-submit"]
-#          args: ["--master", "spark://spark-master-svc:7077", "--properties-file", "$(SPARK_HOME)/conf/spark-driver.conf", "$(SPARK_HOME)/examples/src/main/python/wordcount.py", "/alice_in_wonderland.txt"]
+          #command: ["tail"]
+          #args: ["-f", "/dev/null"]
+          command: ["$(SPARK_HOME)/bin/spark-submit"]
+          args: ["--master", "spark://spark-master-svc:7077", "--properties-file", "$(SPARK_HOME)/conf/spark-driver.conf", "/iot-mapreduce.py"]
 
 
 ###############################################
