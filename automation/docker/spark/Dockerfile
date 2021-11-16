@@ -16,6 +16,7 @@ RUN apt-get -y update && apt-get install -y default-jdk python3
 RUN apt-get install -y python3-dev python3-pip
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install --upgrade pyspark
+RUN python3 -m pip install --upgrade couchdb
 
 # Note, I have added several other packages that provide networking utilities like
 # ping, nslookup, ifconfig etc.
@@ -29,12 +30,18 @@ RUN tar -xvzf spark-*
 COPY spark-env.sh /spark-3.2.0-bin-hadoop3.2/conf/
 COPY spark-worker.conf /spark-3.2.0-bin-hadoop3.2/conf/
 COPY spark-driver.conf /spark-3.2.0-bin-hadoop3.2/conf/
-COPY alice_in_wonderland.txt /
+COPY iot-mapreduce.py /
 
 # Now we set environment variable that we will need in the container at runtime
 ENV SPARK_HOME=/spark-3.2.0-bin-hadoop3.2
 ENV PATH=${PATH}:${SPARK_HOME}/sbin:${SPARK_HOME}/bin
 
-# We do not start any command here but expect the docker run
-# or kubectl apply command will provide the command line to start this.
+
+# Define the following environment variables at runtime for the container for the Python script to work
+# COUCHDB_SERVER
+# COUCHDB_USER
+# COUCHDB_PASSWORD
+# COUCHDB_DATABASE
+CMD ["python3", "/mapreduce.py"]
+
 

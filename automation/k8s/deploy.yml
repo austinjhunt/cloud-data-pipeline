@@ -309,11 +309,18 @@ spec:                     # This is the specification
               value: "spark-master-host"  # floating IP of your spark master machine for outside world
             - name: SPARK_NO_DAEMONIZE # so that the master runs in foreground
               value: "1"
-
             # the SPARK_HOME env set in docker image is not accessible for the command line
             # below. So had to set it here.
             - name: SPARK_HOME
               value: "/spark-3.2.0-bin-hadoop3.2"
+            - name: COUCHDB_SERVER
+              value: couchdb-service-internal:5984
+            - name: COUCHDB_USER
+              value: admin
+            - name: COUCHDB_PASSWORD
+              value: 789456123
+            - name: COUCHDB_DATABASE
+              value: cs5287
 
           command: ["$(SPARK_HOME)/sbin/start-master.sh"]
           args: ["--host", "spark-master-host"]  # provide the floating IP addr of the master VM
@@ -429,8 +436,6 @@ spec:                     # This is the specification
           env:
             - name: SPARK_LOCAL_IP
               value: "spark-driver-host"
-            # the SPARK_HOME env set in docker image is not accessible for the command line
-            # below. So had to set it here.
             - name: SPARK_HOME
               value: "/spark-3.2.0-bin-hadoop3.2"
 
