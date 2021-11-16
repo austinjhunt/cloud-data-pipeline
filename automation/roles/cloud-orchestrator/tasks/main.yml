@@ -222,7 +222,7 @@
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
       app: datapipeline-a3
     key_name: aws-keypair3
-    instance_type: t2.xlarge
+    instance_type: t2.2xlarge
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
     network:
       assign_public_ip: yes
@@ -238,6 +238,13 @@
     security_group: kafka-couchdb-zookeeper-k8s-security
   register: ec2_1
 
+# - name: Create an EBS volume and attach it to EC2 instance 1
+#   become: false
+#   environment: "{{ env_vars }}"
+#   amazon.aws.ec2_vol:
+#     aws_access_key: "{{ aws_access_key_id.stdout }}"
+#     aws_secret_key: "{{ aws_secret_access_key.stdout }}"
+
 - name: Create EC2 Instance 2
   become: false
   environment: "{{ env_vars }}"
@@ -252,7 +259,7 @@
       # Add tags so you can start / stop by tags. Running twice should not create duplicates.
       app: datapipeline-a3
     key_name: aws-keypair3
-    instance_type: t2.xlarge
+    instance_type: t2.2xlarge
     vpc_subnet_id: "{{ datapipeline_vpc_subnet.subnet.id }}"
     network:
       assign_public_ip: yes

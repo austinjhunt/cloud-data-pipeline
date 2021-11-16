@@ -313,7 +313,7 @@ spec:                     # This is the specification
             # the SPARK_HOME env set in docker image is not accessible for the command line
             # below. So had to set it here.
             - name: SPARK_HOME
-              value: "/spark-3.1.1-bin-hadoop3.2"
+              value: "/spark-3.2.0-bin-hadoop3.2"
 
           command: ["$(SPARK_HOME)/sbin/start-master.sh"]
           args: ["--host", "spark-master-host"]  # provide the floating IP addr of the master VM
@@ -375,7 +375,7 @@ spec:                     # This is the specification where we can even put the 
             # the SPARK_HOME env set in docker image is not accessible for the command line
             # below. So had to set it here.
             - name: SPARK_HOME
-              value: "/spark-3.1.1-bin-hadoop3.2"
+              value: "/spark-3.2.0-bin-hadoop3.2"
 
           imagePullPolicy: Always  # This forces the node to pull the image
           command: ["$(SPARK_HOME)/sbin/start-worker.sh"]
@@ -432,7 +432,7 @@ spec:                     # This is the specification
             # the SPARK_HOME env set in docker image is not accessible for the command line
             # below. So had to set it here.
             - name: SPARK_HOME
-              value: "/spark-3.1.1-bin-hadoop3.2"
+              value: "/spark-3.2.0-bin-hadoop3.2"
 
           ports:            # Spark driver port
             - containerPort: 4040  # the dashboard
