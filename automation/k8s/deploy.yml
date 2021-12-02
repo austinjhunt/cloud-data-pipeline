@@ -1,4 +1,3 @@
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -17,26 +16,26 @@ spec:
         app: zookeeper
     spec:
       containers:
-      # Zookeeper container
-      - name: zookeeper
-        image: bitnami/zookeeper
-        ports:
-        - containerPort: 2181
-          name: client
-        - containerPort: 2888
-          name: server
-        - containerPort: 3888
-          name: leader-election
-        env:
-        - name: ALLOW_ANONYMOUS_LOGIN
-          value: "yes"
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "0.75"
-          limits:
-            memory: "1Gi"
-            cpu: "0.75"
+        # Zookeeper container
+        - name: zookeeper
+          image: bitnami/zookeeper
+          ports:
+            - containerPort: 2181
+              name: client
+            - containerPort: 2888
+              name: server
+            - containerPort: 3888
+              name: leader-election
+          env:
+            - name: ALLOW_ANONYMOUS_LOGIN
+              value: "yes"
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "0.75"
+            limits:
+              memory: "1Gi"
+              cpu: "0.75"
 ---
 ### KAFKA BROKER DEPLOYMENTS DEPEND ON zookeeper-service ###
 # Deployment for broker 0 - BOOTSTRAP SERVER in Kafka Cluster, so we can
@@ -61,46 +60,51 @@ spec:
     spec:
       # Wait for zookeeper to start up first
       initContainers:
-      - name: wait
-        image: alpine
-        command: ["/bin/sh", "-c", "for i in $(seq 1 300); do nc -zvw1 zookeeper-service 2181 && exit 0 || sleep 3; done; exit 1"]
+        - name: wait
+          image: alpine
+          command:
+            [
+              "/bin/sh",
+              "-c",
+              "for i in $(seq 1 300); do nc -zvw1 zookeeper-service 2181 && exit 0 || sleep 3; done; exit 1",
+            ]
       containers:
-      # Kafka Broker 0
-      - name: broker0
-        image: bitnami/kafka
-        ports:
-        - containerPort: 9092
-          name: internal
-        - containerPort: 9093
-          name: external
-        - containerPort: 9094
-          name: interbroker
-        env:
-        - name: MY_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
-          value: "INTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,EXTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,INTERBROKER_LISTENER:PLAINTEXT"
-        - name: KAFKA_LISTENERS
-          value: "INTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9092,EXTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9093,INTERBROKER_LISTENER://0.0.0.0:9094"
-        - name: KAFKA_INTER_BROKER_LISTENER_NAME
-          value: "INTERBROKER_LISTENER"
-        - name: KAFKA_ADVERTISED_LISTENERS
-          value: "INTERNAL_BOOTSTRAP_SERVICE://$(MY_POD_IP):9092,INTERBROKER_LISTENER://$(MY_POD_IP):9094,EXTERNAL_BOOTSTRAP_SERVICE://50.16.31.149:30985"
-        - name: KAFKA_ZOOKEEPER_CONNECT
-          value: "zookeeper-service:2181"
-        - name: KAFKA_BROKER_ID
-          value: "0"
-        - name: ALLOW_PLAINTEXT_LISTENER
-          value: "yes"
-        resources:
-          requests:
+        # Kafka Broker 0
+        - name: broker0
+          image: bitnami/kafka
+          ports:
+            - containerPort: 9092
+              name: internal
+            - containerPort: 9093
+              name: external
+            - containerPort: 9094
+              name: interbroker
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "INTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,EXTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,INTERBROKER_LISTENER:PLAINTEXT"
+            - name: KAFKA_LISTENERS
+              value: "INTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9092,EXTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9093,INTERBROKER_LISTENER://0.0.0.0:9094"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "INTERBROKER_LISTENER"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "INTERNAL_BOOTSTRAP_SERVICE://$(MY_POD_IP):9092,INTERBROKER_LISTENER://$(MY_POD_IP):9094,EXTERNAL_BOOTSTRAP_SERVICE://50.16.31.149:30985"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "zookeeper-service:2181"
+            - name: KAFKA_BROKER_ID
+              value: "0"
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: "yes"
+          resources:
+            requests:
               memory: "256Mi"
               cpu: "0.75"
-          limits:
-            memory: "512Mi"
-            cpu: "0.75"
+            limits:
+              memory: "512Mi"
+              cpu: "0.75"
 ---
 # Deployment for broker 1 - BOOTSTRAP SERVER in Kafka Cluster, so we can
 # expose a BOOTSTRAP SERVER SERVICE that consumer and producer can connect to
@@ -124,45 +128,50 @@ spec:
     spec:
       # Wait for zookeeper to start up first
       initContainers:
-      - name: wait
-        image: alpine
-        command: ["/bin/sh", "-c", "for i in $(seq 1 300); do nc -zvw1 zookeeper-service 2181 && exit 0 || sleep 3; done; exit 1"]
+        - name: wait
+          image: alpine
+          command:
+            [
+              "/bin/sh",
+              "-c",
+              "for i in $(seq 1 300); do nc -zvw1 zookeeper-service 2181 && exit 0 || sleep 3; done; exit 1",
+            ]
       containers:
-      - name: broker1
-        image: bitnami/kafka
-        ports:
-        - containerPort: 9092
-          name: internal
-        - containerPort: 9093
-          name: external
-        - containerPort: 9094
-          name: interbroker
-        env:
-        - name: MY_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
-          value: "INTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,EXTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,INTERBROKER_LISTENER:PLAINTEXT"
-        - name: KAFKA_LISTENERS
-          value: "INTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9092,EXTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9093,INTERBROKER_LISTENER://0.0.0.0:9094"
-        - name: KAFKA_INTER_BROKER_LISTENER_NAME
-          value: "INTERBROKER_LISTENER"
-        - name: KAFKA_ADVERTISED_LISTENERS
-          value: "INTERNAL_BOOTSTRAP_SERVICE://:9092,EXTERNAL_BOOTSTRAP_SERVICE://:9093,INTERBROKER_LISTENER://$(MY_POD_IP):9094"
-        - name: KAFKA_ZOOKEEPER_CONNECT
-          value: "zookeeper-service:2181"
-        - name: KAFKA_BROKER_ID
-          value: "1"
-        - name: ALLOW_PLAINTEXT_LISTENER
-          value: "yes"
-        resources:
-          requests:
+        - name: broker1
+          image: bitnami/kafka
+          ports:
+            - containerPort: 9092
+              name: internal
+            - containerPort: 9093
+              name: external
+            - containerPort: 9094
+              name: interbroker
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "INTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,EXTERNAL_BOOTSTRAP_SERVICE:PLAINTEXT,INTERBROKER_LISTENER:PLAINTEXT"
+            - name: KAFKA_LISTENERS
+              value: "INTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9092,EXTERNAL_BOOTSTRAP_SERVICE://0.0.0.0:9093,INTERBROKER_LISTENER://0.0.0.0:9094"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "INTERBROKER_LISTENER"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "INTERNAL_BOOTSTRAP_SERVICE://:9092,EXTERNAL_BOOTSTRAP_SERVICE://:9093,INTERBROKER_LISTENER://$(MY_POD_IP):9094"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "zookeeper-service:2181"
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: "yes"
+          resources:
+            requests:
               memory: "256Mi"
               cpu: "0.75"
-          limits:
-            memory: "512Mi"
-            cpu: "0.75"
+            limits:
+              memory: "512Mi"
+              cpu: "0.75"
 
 ### END KAFKA BROKER DEPLOYMENTS DEPEND ON zookeeper-service ###
 
@@ -185,24 +194,24 @@ spec:
         app: couchdb
     spec:
       containers:
-      - name: couchdb
-        image: couchdb
-        ports:
-        - containerPort: 5984
-        env:
-        - name: COUCHDB_USER
-          value: admin
-        - name: COUCHDB_PASSWORD
-          value: "789456123"
-        - name: NODENAME
-          value: couchie-that-hurts
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "0.75" # 250 milliCPUs
-          limits:
-            memory: "512Mi"
-            cpu: "0.75"
+        - name: couchdb
+          image: couchdb
+          ports:
+            - containerPort: 5984
+          env:
+            - name: COUCHDB_USER
+              value: admin
+            - name: COUCHDB_PASSWORD
+              value: "789456123"
+            - name: NODENAME
+              value: couchie-that-hurts
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "0.75" # 250 milliCPUs
+            limits:
+              memory: "512Mi"
+              cpu: "0.75"
 ### END COUCHDB DEPLOYMENT ###
 ---
 ### CONSUMER DEPLOYMENT; DOES NOT REQUIRE PUBLICLY
@@ -226,34 +235,40 @@ spec:
     spec:
       # Wait for couchdb and bootstrap kafka member to start first
       initContainers:
-      - name: wait
-        image: alpine
-        command: ["sh", "-c", "for i in $(seq 1 300); do nc -zvw1 couchdb-service-internal 5984 && nc -zvw1 kafka-service-internal 9092 && exit 0 || sleep 3; done; exit 1"]
+        - name: wait
+          image: alpine
+          command:
+            [
+              "sh",
+              "-c",
+              "for i in $(seq 1 300); do nc -zvw1 couchdb-service-internal 5984 && nc -zvw1 kafka-service-internal 9092 && exit 0 || sleep 3; done; exit 1",
+            ]
+
       containers:
-      - name: consumer
-        image: austinjhunt/5287kafkaconsumer
-        env:
-        - name: CONSUME_TOPIC
-          value: stock-market-data
-        - name: BOOTSTRAP_SERVER
-          # serviceName.namespace.svc.cluster.local
-          value: "kafka-service-internal:9092"
-        - name: COUCHDB_SERVER
-          # serviceName.namespace.svc.cluster.local
-          value: "couchdb-service-internal"
-        - name: COUCHDB_USER
-          value: "admin"
-        - name: COUCHDB_PASSWORD
-          value: "789456123"
-        - name: COUCHDB_DATABASE
-          value: "cs5287"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "0.75" # 250 milliCPUs
-          limits:
-            memory: "512Mi"
-            cpu: "0.75"
+        - name: consumer
+          image: austinjhunt/5287kafkaconsumer
+          env:
+            - name: CONSUME_TOPIC
+              value: stock-market-data
+            - name: BOOTSTRAP_SERVER
+              # serviceName.namespace.svc.cluster.local
+              value: "kafka-service-internal:9092"
+            - name: COUCHDB_SERVER
+              # serviceName.namespace.svc.cluster.local
+              value: "couchdb-service-internal"
+            - name: COUCHDB_USER
+              value: "admin"
+            - name: COUCHDB_PASSWORD
+              value: "789456123"
+            - name: COUCHDB_DATABASE
+              value: "cs5287"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "0.75" # 250 milliCPUs
+            limits:
+              memory: "512Mi"
+              cpu: "0.75"
 ### END CONSUMER DEPLOYMENT; DOES NOT REQUIRE PUBLICLY
 ### EXPOSING ANY SPECIFIC PORT SO NO SERVICE ASSIGNED ###
 ---
@@ -269,30 +284,36 @@ spec:
 # For assignment #4
 # this is the deployment pod for Spark master
 apiVersion: apps/v1
-kind: Deployment         # We are testing the Deployment resource
+kind: Deployment # We are testing the Deployment resource
 metadata:
-  name: spark-master-deploy  # This will run the Spark master
-spec:                     # This is the specification
-  replicas: 1             # only 1 replica of master
+  name: spark-master-deploy # This will run the Spark master
+spec: # This is the specification
+  replicas: 1 # only 1 replica of master
   selector:
     matchLabels:
-      app: sparkMasterApp          # Basically this is like the search string used to locate the pods
-  minReadySeconds: 5  # if anything crashes before 5 secs, the deployment is not
-                          # considered as ready and available. Default value is 0
-  template:               # Specified info needed to run the pod and what runs in the pod
+      app: sparkMasterApp # Basically this is like the search string used to locate the pods
+  minReadySeconds:
+    5 # if anything crashes before 5 secs, the deployment is not
+    # considered as ready and available. Default value is 0
+  template: # Specified info needed to run the pod and what runs in the pod
     metadata:
       labels:
-        app: sparkMasterApp        # some label to give to this pod (see the matching label above)
-    spec:                 # actual specification
+        app: sparkMasterApp # some label to give to this pod (see the matching label above)
+    spec: # actual specification
       hostname: spark-master-host
       nodeSelector:
         # we force k8s to run Spark master on this node
         kubernetes.io/hostname: kubemaster
       # Wait for couchdb before starting spark containers
       initContainers:
-      - name: wait
-        image: alpine
-        command: ["sh", "-c", "for i in $(seq 1 300); do nc -zvw1 couchdb-service-internal 5984 && exit 0 || sleep 3; done; exit 1"]
+        - name: wait
+          image: alpine
+          command:
+            [
+              "sh",
+              "-c",
+              "for i in $(seq 1 300); do nc -zvw1 couchdb-service-internal 5984 && exit 0 || sleep 3; done; exit 1",
+            ]
 
       containers:
         - name: spark-master
@@ -303,16 +324,16 @@ spec:                     # This is the specification
             limits:
               memory: "512Mi"
               cpu: "0.75"
-          image: austinjhunt/cs5287spark   # this is the image in private registry
-          imagePullPolicy: Always  # This forces the node to pull the image
-          ports:            # Spark master port
-            - containerPort: 7077  # inside it listens on this port
-            - containerPort: 8080  # the dashboard
-          env:  # environment variables to pass
-#            - name: SPARK_MASTER_HOST
-#              value: "129.114.25.80"  # floating IP of your spark master machine for outside world
+          image: austinjhunt/cs5287spark # this is the image in private registry
+          imagePullPolicy: Always # This forces the node to pull the image
+          ports: # Spark master port
+            - containerPort: 7077 # inside it listens on this port
+            - containerPort: 8080 # the dashboard
+          env: # environment variables to pass
+            #            - name: SPARK_MASTER_HOST
+            #              value: "129.114.25.80"  # floating IP of your spark master machine for outside world
             - name: SPARK_LOCAL_IP
-              value: "spark-master-host"  # floating IP of your spark master machine for outside world
+              value: "spark-master-host" # floating IP of your spark master machine for outside world
             - name: SPARK_NO_DAEMONIZE # so that the master runs in foreground
               value: "1"
             # the SPARK_HOME env set in docker image is not accessible for the command line
@@ -321,7 +342,7 @@ spec:                     # This is the specification
               value: "/spark-3.2.0-bin-hadoop3.2"
 
           command: ["$(SPARK_HOME)/sbin/start-master.sh"]
-          args: ["--host", "spark-master-host"]  # provide the floating IP addr of the master VM
+          args: ["--host", "spark-master-host"] # provide the floating IP addr of the master VM
 
 ---
 # CS4287-5287
@@ -331,28 +352,34 @@ spec:                     # This is the specification
 # For assignment #4
 # this is the deployment pod for Spark workers
 apiVersion: apps/v1
-kind: Deployment         # We are testing the Deployment resource
+kind: Deployment # We are testing the Deployment resource
 metadata:
-  name: spark-worker-deploy  # This will run the Spark worker
-spec:                     # This is the specification where we can even put the number of replicas
-  replicas: 5             # we run 5 workers
+  name: spark-worker-deploy # This will run the Spark worker
+spec: # This is the specification where we can even put the number of replicas
+  replicas: 5 # we run 5 workers
   selector:
     matchLabels:
-      app: sparkWorkerApp          # Basically this is like the search string used to locate the pods
-  minReadySeconds: 5  # if anything crashes before 5 secs, the deployment is not
-                          # considered as ready and available. Default value is 0
-  template:               # Specified info needed to run the pod and what runs in the pod
+      app: sparkWorkerApp # Basically this is like the search string used to locate the pods
+  minReadySeconds:
+    5 # if anything crashes before 5 secs, the deployment is not
+    # considered as ready and available. Default value is 0
+  template: # Specified info needed to run the pod and what runs in the pod
     metadata:
       labels:
-        app: sparkWorkerApp        # some label to give to this pod (see the matching label above)
-    spec:                 # actual specification
-      hostname: spark-worker-host  # we need it to set the SPARK_LOCAL_IP
+        app: sparkWorkerApp # some label to give to this pod (see the matching label above)
+    spec: # actual specification
+      hostname: spark-worker-host # we need it to set the SPARK_LOCAL_IP
 
       # Wait for spark master before starting containers
       initContainers:
-      - name: wait
-        image: alpine
-        command: ["sh", "-c", "for i in $(seq 1 300); do nc -zvw1 spark-master-svc 7077 && nc -zvw1 spark-master-svc 8080 && exit 0 || sleep 3; done; exit 1"]
+        - name: wait
+          image: alpine
+          command:
+            [
+              "sh",
+              "-c",
+              "for i in $(seq 1 300); do nc -zvw1 spark-master-svc 7077 && nc -zvw1 spark-master-svc 8080 && exit 0 || sleep 3; done; exit 1",
+            ]
 
       containers:
         - name: spark-worker
@@ -364,15 +391,14 @@ spec:                     # This is the specification where we can even put the 
               memory: "512Mi"
               cpu: "0.75"
           # used to name container
-          image: austinjhunt/cs5287spark   # this is the image in private registry
-          ports:            # Spark worker port
-            - containerPort: 7078  # worker will use this port instead of random port
-            - containerPort: 7079  # used by block manager
-            - containerPort: 8081  # GUI
-          env:  # environment variables to pass
-
+          image: austinjhunt/cs5287spark # this is the image in private registry
+          ports: # Spark worker port
+            - containerPort: 7078 # worker will use this port instead of random port
+            - containerPort: 7079 # used by block manager
+            - containerPort: 8081 # GUI
+          env: # environment variables to pass
             - name: SPARK_LOCAL_IP
-              value: "spark-worker-host"  # floating IP of your spark master machine
+              value: "spark-worker-host" # floating IP of your spark master machine
 
             - name: SPARK_NO_DAEMONIZE # so that the master runs in foreground
               value: "1"
@@ -382,9 +408,14 @@ spec:                     # This is the specification where we can even put the 
             - name: SPARK_HOME
               value: "/spark-3.2.0-bin-hadoop3.2"
 
-          imagePullPolicy: Always  # This forces the node to pull the image
+          imagePullPolicy: Always # This forces the node to pull the image
           command: ["$(SPARK_HOME)/sbin/start-worker.sh"]
-          args: ["spark://spark-master-svc:7077", "--properties-file", "$(SPARK_HOME)/conf/spark-worker.conf"]
+          args:
+            [
+              "spark://spark-master-svc:7077",
+              "--properties-file",
+              "$(SPARK_HOME)/conf/spark-worker.conf",
+            ]
 
 ---
 # CS4287-5287
@@ -394,31 +425,36 @@ spec:                     # This is the specification where we can even put the 
 # For assignment #4
 # this is the deployment pod for Spark driver
 apiVersion: apps/v1
-kind: Deployment         # We are testing the Deployment resource
+kind: Deployment # We are testing the Deployment resource
 metadata:
-  name: spark-driver-deploy  # This will run the Spark driver
-spec:                     # This is the specification
-  replicas: 1             # only 1 replica of the driver
+  name: spark-driver-deploy # This will run the Spark driver
+spec: # This is the specification
+  replicas: 1 # only 1 replica of the driver
   selector:
     matchLabels:
-      app: sparkDriverApp   # Basically this is like the search string used to locate the pods
-  minReadySeconds: 5  # if anything crashes before 5 secs, the deployment is not
-                          # considered as ready and available. Default value is 0
-  template:               # Specified info needed to run the pod and what runs in the pod
+      app: sparkDriverApp # Basically this is like the search string used to locate the pods
+  minReadySeconds: 5 # if anything crashes before 5 secs, the deployment is not
+    # considered as ready and available. Default value is 0
+  template: # Specified info needed to run the pod and what runs in the pod
     metadata:
       labels:
-        app: sparkDriverApp   # some label to give to this pod (see the matching label above)
-    spec:                 # actual specification
+        app: sparkDriverApp # some label to give to this pod (see the matching label above)
+    spec: # actual specification
       hostname: spark-driver-host
-      nodeSelector:
-        # we force k8s to run this driver on this node
-        kubernetes.io/hostname: kubemaster
+      # nodeSelector:
+      #   # we force k8s to run this driver on this node
+      #   kubernetes.io/hostname: kubemaster
 
       # Wait for spark master before starting containers
       initContainers:
-      - name: wait
-        image: alpine
-        command: ["sh", "-c", "for i in $(seq 1 300); do nc -zvw1 spark-master-svc 7077 && nc -zvw1 spark-master-svc 8080 && exit 0 || sleep 3; done; exit 1"]
+        - name: wait
+          image: alpine
+          command:
+            [
+              "sh",
+              "-c",
+              "for i in $(seq 1 300); do nc -zvw1 spark-master-svc 7077 && nc -zvw1 spark-master-svc 8080 && exit 0 || sleep 3; done; exit 1",
+            ]
 
       containers:
         - name: spark-driver
@@ -429,8 +465,8 @@ spec:                     # This is the specification
             limits:
               memory: "512Mi"
               cpu: "0.75"
-          image: austinjhunt/cs5287spark   # this is the image in private registry
-          imagePullPolicy: Always  # This forces the node to pull the image
+          image: austinjhunt/cs5287spark # this is the image in private registry
+          imagePullPolicy: Always # This forces the node to pull the image
           env:
             - name: SPARK_LOCAL_IP
               value: "spark-driver-host"
@@ -445,10 +481,10 @@ spec:                     # This is the specification
             - name: COUCHDB_DATABASE
               value: cs5287
 
-          ports:            # Spark driver port
-            - containerPort: 4040  # the dashboard
-            - containerPort: 7076  # port to listen on
-            - containerPort: 7079  # block manager port
+          ports: # Spark driver port
+            - containerPort: 4040 # the dashboard
+            - containerPort: 7076 # port to listen on
+            - containerPort: 7079 # block manager port
 
           # if you want to run multiple iterations of the same logic, use this approach
           # then manually run the following commented out command/arg combo for the desired
@@ -458,9 +494,14 @@ spec:                     # This is the specification
           #command: ["tail"]
           #args: ["-f", "/dev/null"]
           command: ["$(SPARK_HOME)/bin/spark-submit"]
-          args: ["--master", "spark://spark-master-svc:7077", "--properties-file", "$(SPARK_HOME)/conf/spark-driver.conf", "/iot-mapreduce.py"]
-
-
+          args:
+            [
+              "--master",
+              "spark://spark-master-svc:7077",
+              "--properties-file",
+              "$(SPARK_HOME)/conf/spark-driver.conf",
+              "/iot-mapreduce.py"
+            ]
 ###############################################
 ###############################################
 ####### End Apache Spark Deployments ##########
