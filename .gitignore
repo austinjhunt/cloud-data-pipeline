@@ -3,3 +3,4 @@ venv
 .vagrant
 __pycache__
 setup-env.sh
+*.zip

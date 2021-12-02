@@ -118,7 +118,7 @@ parser.add_argument('-p', '--run_producer', help='whether to run producer', acti
 parser.add_argument('-pa', '--producer_alias', default='Producer 1',
     help='WHEN RUNNING PRODUCER WITH -p|--producer, friendly alias/name of producer', type=str)
 parser.add_argument('-n', '--num_messages', type=int, default=100, help='number of messages to produce')
-parser.add_argument('-s', '--sleep_interval', default=1, type=int,
+parser.add_argument('-s', '--sleep_interval', default=1, type=float,
     help='WHEN RUNNING PRODUCER WITH -p|--producer, number of seconds to sleep between each message sent')
 parser.add_argument('-ss', '--stock_symbol', default='AMZN', help=(
     'WHEN RUNNING PRODUCER WITH -p|--producer, stock symbol to produce data for'), type=str)
