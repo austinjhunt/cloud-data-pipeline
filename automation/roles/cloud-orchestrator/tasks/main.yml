@@ -200,8 +200,6 @@
         - 7079
         cidr_ip: 0.0.0.0/0
         rule_desc: Apache spark block manager
-
-
     state: present
     region: us-east-1
 

@@ -1,3 +1,4 @@
+boto3==1.20.18
 certifi==2021.5.30
 charset-normalizer==2.0.4
 CouchDB==1.2

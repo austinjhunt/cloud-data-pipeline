@@ -37,5 +37,6 @@
     - libffi-dev
     - python3-dev
 
+
 - name: install python requirements in requirements.txt
   command: pip install -r /vagrant/requirements.txt

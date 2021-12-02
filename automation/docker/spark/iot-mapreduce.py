@@ -36,7 +36,7 @@ class IOTSparkMapReducer:
         chunks = []
         for doc_id in self.db:
             chunk = self.db.get(doc_id).get('chunk')
-            # This chunk contains many sub dicts, each of which represent an energy record.
+            # This chunk contains many sub dicts, each of which represent an energy record from CSV
             for energy_record in chunk:
                 chunks.append(energy_record)
         return chunks
@@ -131,11 +131,11 @@ class IOTSparkMapReducer:
         try:
             db = self.couch.create(db_name)
             self.debug(
-                f"Successfully created new CouchDB database {self.couchdb_database}")
+                f"Successfully created new CouchDB database {db_name}")
         except:
             db = self.couch[db_name]
             self.debug(
-                f"Successfully connected to existing CouchDB database {self.couchdb_database}")
+                f"Successfully connected to existing CouchDB database {db_name}")
         self.debug(f'Preparing to save {len(lst)} items to database')
         fails = 0
         for msg in lst:
@@ -151,7 +151,7 @@ class IOTSparkMapReducer:
                 self.error(e)
                 fails += 1
         self.debug("Saving completed")
-        self.debug(f"Failed to send {fails} items")
+        self.debug(f"Failed to save {fails} items")
 
     def validate(self):
         """ used only for testing/development; Count number of unique (row.plug_id, row.household_id, row.house_id) tuples """
@@ -186,6 +186,7 @@ if __name__ == "__main__":
     master = IOTSparkMapReducer(verbose=True)
     # wait for the signal that the database is ready to be read from
     # the signal comes in the form of a database called "complete" added to the couchdb server.
+    # add this manually once all data is added
     while not master.database_exists("complete"):
         master.debug("waiting on 'complete' database creation to signal Spark Analysis")
         time.sleep(3)
